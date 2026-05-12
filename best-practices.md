@@ -48,5 +48,8 @@
 
 ## Git / CI
 
+- **GitHub Flow**: branch from `main`, PR, merge, delete — no `develop` or `staging` branches
+- Branch names: `feature/`, `fix/`, `content/`, `infra/`, `docs/` + kebab-case slug
 - Never push to `main` with failing `type-check`, `lint`, or `test:unit`
 - Commits must be atomic: one logical change per commit
+- Use feature flags (`src/config/features.ts`) for incomplete work that lands on `main` early

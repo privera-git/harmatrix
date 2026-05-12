@@ -41,4 +41,23 @@ Static SPA — no backend, no router. All state lives in Pinia stores; no server
 - Import alias `@/` maps to `src/`.
 - Linting runs oxlint first, then eslint — both auto-fix on `npm run lint`.
 
+## Git Workflow
+
+**Model:** GitHub Flow — `main` is always deployable; never commit directly to it.
+
+Branch naming: `prefix/short-description-in-kebab-case`
+
+| Prefix | Use |
+|--------|-----|
+| `feature/` | New functionality |
+| `fix/` | Bug fix |
+| `content/` | Musical content (chords, scales, exercises) |
+| `infra/` | CI/CD, Vite config, tooling |
+| `docs/` | GDD, ADRs, README |
+
+Rules:
+- One branch = one unit of work → one PR → merge to `main` → delete branch
+- Every PR must pass `type-check`, `lint`, and `test:unit` before merge
+- Use feature flags (`src/config/features.ts`) for incomplete work merged early
+
 @best-practices.md
