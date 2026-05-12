@@ -8,6 +8,15 @@
   from the existing architecture.
 - Identify which files, stores, and components are affected before proposing changes.
 
+## Documentation Lookup
+
+- Before writing code that uses a library in the stack (Vue 3, Pinia, Vite, Vitest, TypeScript,
+  Vue Router, VueUse), resolve the library ID with `context7` and fetch the relevant docs.
+- Do not rely solely on training-data knowledge for API signatures, composable names, or
+  configuration options — these change across minor versions.
+- Use Context7 to verify the exact import path, option names, and any deprecations before
+  proposing an implementation.
+
 ## Planning
 
 - Every plan must include a **Risks** section if the change touches:
