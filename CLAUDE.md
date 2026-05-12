@@ -61,3 +61,4 @@ Rules:
 - Use feature flags (`src/config/features.ts`) for incomplete work merged early
 
 @best-practices.md
+@claude-behavior.md
