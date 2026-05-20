@@ -74,6 +74,13 @@ fix bug
 update files
 ```
 
+Never add "Co-Authored-By" line to the commit message to reger some IA model.
+
+Bad:
+```
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
 ## Before Every Commit
 
 ```bash
