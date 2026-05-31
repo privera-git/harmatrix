@@ -55,6 +55,23 @@
 - The user has advanced knowledge of jazz theory and software architecture. Do not explain
   domain concepts unless asked.
 
+## Before Completing Any Task
+
+Before considering a task done and suggesting a commit, always run the three local
+verification commands in this order:
+
+```bash
+npm run lint
+npm run test:unit -- --run
+npm run build
+```
+
+- If any command fails, fix the issue before proposing a commit.
+- If the environment cannot run these commands (e.g., Node.js not available in the shell),
+  say so explicitly and instruct the user to run them before merging.
+- Do not skip this step even for changes that appear trivial — lint and type-check catch
+  errors that are invisible during authoring.
+
 ## Scope Management
 
 - A bug fix touches only the bug. A feature touches only the feature.
