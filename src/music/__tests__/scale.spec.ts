@@ -39,7 +39,7 @@ describe('SCALE_CATALOG', () => {
       'halfWholeDim',
     ]
     for (const m of required) {
-      expect(SCALE_CATALOG[m], `missing mode: ${m}`).toBeDefined()
+      expect(SCALE_CATALOG[m]).toBeDefined()
     }
   })
 
@@ -239,7 +239,7 @@ describe('buildScale — invariants', () => {
     const roots = ['C', 'G#', 'Ab', 'Bb', 'F#']
     for (const root of roots) {
       for (const m of modes) {
-        expect(buildScale(root, m)[0], `${root} ${m}`).toBe(root)
+        expect(buildScale(root, m)[0]).toBe(root)
       }
     }
   })

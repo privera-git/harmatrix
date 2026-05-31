@@ -27,7 +27,7 @@ describe('CHORD_CATALOG', () => {
       'alt',
     ]
     for (const q of required) {
-      expect(CHORD_CATALOG[q], `missing quality: ${q}`).toBeDefined()
+      expect(CHORD_CATALOG[q]).toBeDefined()
     }
   })
 
