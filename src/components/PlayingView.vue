@@ -5,6 +5,7 @@ import { useGameStore } from '@/stores/game'
 import { FEATURES } from '@/config/features'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import NotePicker from '@/components/NotePicker.vue'
+import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import type { MatrixCell } from '@/music/matrix'
 
 const gameStore = useGameStore()
@@ -85,7 +86,7 @@ function submit() {
         @cell-click="onCellClick"
       />
 
-      <div v-if="showPiano" class="piano-placeholder">[piano keyboard]</div>
+      <PianoKeyboard v-if="showPiano" />
 
       <NotePicker v-model="activeCellNote" :disabled="activeCell === null" />
 
@@ -132,11 +133,6 @@ function submit() {
   align-items: center;
   gap: 1.25rem;
   padding: 1.5rem 0;
-}
-
-.piano-placeholder {
-  font-size: 0.8rem;
-  color: #aaa;
 }
 
 .submit-btn {
