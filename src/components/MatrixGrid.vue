@@ -100,6 +100,7 @@ function handleClick(cell: MatrixCell) {
 
 .matrix-cell.given {
   background: #f0f0f0;
+  color: #333;
 }
 
 .matrix-cell.active {
