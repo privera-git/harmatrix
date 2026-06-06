@@ -20,6 +20,7 @@ type GameSession =
       puzzle: MatrixPuzzle
       results: AnswerResult[][]
       score: number
+      options: ScoringOptions
     }
 
 export type { GameSession }
@@ -82,6 +83,7 @@ export const useGameStore = defineStore('game', () => {
       puzzle,
       results,
       score: scoreSession(nonGivenResults, options),
+      options,
     }
     return true
   }
