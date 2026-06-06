@@ -1,21 +1,16 @@
 <script setup lang="ts">
 const WHITE_KEY_WIDTH = 36
-const BLACK_KEY_WIDTH = 22
 
 const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
 
-// offset in white-key-width units; left px = offset * WHITE_KEY_WIDTH - BLACK_KEY_WIDTH / 2
+// leftPx = (n+1) * WHITE_KEY_WIDTH - BLACK_KEY_WIDTH * 0.6, where n = index of white key to the left
 const BLACK_KEYS = [
-  { note: 'C#', offset: 0.7 },
-  { note: 'D#', offset: 1.7 },
-  { note: 'F#', offset: 3.7 },
-  { note: 'G#', offset: 4.7 },
-  { note: 'A#', offset: 5.7 },
+  { note: 'C#', leftPx: 23 },
+  { note: 'D#', leftPx: 59 },
+  { note: 'F#', leftPx: 131 },
+  { note: 'G#', leftPx: 167 },
+  { note: 'A#', leftPx: 203 },
 ] as const
-
-function blackKeyLeft(offset: number): string {
-  return `${offset * WHITE_KEY_WIDTH - BLACK_KEY_WIDTH / 2}px`
-}
 </script>
 
 <template>
@@ -28,7 +23,7 @@ function blackKeyLeft(offset: number): string {
         v-for="key in BLACK_KEYS"
         :key="key.note"
         class="key black-key"
-        :style="{ left: blackKeyLeft(key.offset) }"
+        :style="{ left: key.leftPx + 'px' }"
       />
     </div>
   </div>
@@ -42,7 +37,6 @@ function blackKeyLeft(offset: number): string {
 .keys-container {
   position: relative;
   display: flex;
-  gap: 2px;
 }
 
 .key {
@@ -53,6 +47,7 @@ function blackKeyLeft(offset: number): string {
   width: v-bind('WHITE_KEY_WIDTH + "px"');
   height: 80px;
   border: 1px solid #aaa;
+  border-right: 2px solid #ccc;
   background: #fff;
   display: flex;
   align-items: flex-end;
@@ -67,7 +62,7 @@ function blackKeyLeft(offset: number): string {
 
 .black-key {
   position: absolute;
-  width: v-bind('BLACK_KEY_WIDTH + "px"');
+  width: 22px;
   height: 50px;
   background: #222;
   top: 0;
