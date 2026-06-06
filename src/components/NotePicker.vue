@@ -76,6 +76,7 @@ function selectAccidental(acc: Accidental) {
 .note-picker {
   display: inline-flex;
   flex-direction: column;
+  align-items: center;
   gap: 4px;
 }
 
