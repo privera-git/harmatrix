@@ -99,7 +99,7 @@ function handleClick(cell: MatrixCell) {
 }
 
 .matrix-cell.given {
-  background: #f0f0f0;
+  background: repeating-linear-gradient(-45deg, #e8e8e8, #e8e8e8 4px, #f5f5f5 4px, #f5f5f5 8px);
   color: #333;
 }
 
