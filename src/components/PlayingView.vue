@@ -122,8 +122,14 @@ function submit() {
   padding: 0.3rem 0.9rem;
   font-size: 0.85rem;
   cursor: pointer;
-  border: 1px solid #999;
-  background: transparent;
+  border: 1px solid #333;
+  background: #333;
+  color: #fff;
+}
+
+.abandon-btn:hover {
+  background: #555;
+  border-color: #555;
 }
 
 .playing-main {
