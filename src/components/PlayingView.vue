@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { FEATURES } from '@/config/features'
+import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import NotePicker from '@/components/NotePicker.vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
@@ -52,6 +53,11 @@ function onCellClick(row: number, col: number) {
   activeCell.value = { row, col }
 }
 
+const puzzleTitle = computed(() => {
+  if (session.value.phase !== 'playing') return ''
+  return formatPuzzleTitle(session.value.puzzle.diagonalNote, session.value.puzzle.quality)
+})
+
 function abandon() {
   activeCell.value = null
   gameStore.resetSession()
@@ -71,9 +77,7 @@ function submit() {
 <template>
   <div v-if="session.phase === 'playing'" class="playing-view">
     <header class="playing-header">
-      <span class="puzzle-label"
-        >{{ session.puzzle.quality }} · {{ session.puzzle.diagonalNote }}</span
-      >
+      <span class="puzzle-label">{{ puzzleTitle }}</span>
       <button class="abandon-btn" @click="abandon">Abandon</button>
     </header>
 
@@ -115,7 +119,6 @@ function submit() {
 
 .puzzle-label {
   font-weight: 600;
-  text-transform: capitalize;
 }
 
 .abandon-btn {

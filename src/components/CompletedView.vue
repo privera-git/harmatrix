@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { sessionMultiplier } from '@/music/scoring'
+import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 
 const gameStore = useGameStore()
@@ -26,6 +27,11 @@ const breakdown = computed(() => {
     })
   })
   return { correct, enharmonic, wrong }
+})
+
+const puzzleTitle = computed(() => {
+  if (session.value.phase !== 'completed') return ''
+  return formatPuzzleTitle(session.value.puzzle.diagonalNote, session.value.puzzle.quality)
 })
 
 const multiplier = computed(() => {
@@ -57,9 +63,7 @@ function backToMenu() {
 <template>
   <div v-if="session.phase === 'completed'" class="completed-view">
     <header class="completed-header">
-      <span class="puzzle-label"
-        >{{ session.puzzle.quality }} · {{ session.puzzle.diagonalNote }}</span
-      >
+      <span class="puzzle-label">{{ puzzleTitle }}</span>
     </header>
 
     <main class="completed-main">
@@ -105,7 +109,6 @@ function backToMenu() {
 
 .puzzle-label {
   font-weight: 600;
-  text-transform: capitalize;
 }
 
 .completed-main {
