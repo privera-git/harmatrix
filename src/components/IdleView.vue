@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { CURRICULUM, SUB_STAGE_SESSION_SIZE } from '@/config/game'
+import { randomDiagonalNote } from '@/music/note'
 
 const gameStore = useGameStore()
 const { state } = storeToRefs(useProgressStore())
@@ -21,7 +22,7 @@ const quality = computed(() => {
 })
 
 function start() {
-  gameStore.startPuzzle('C', quality.value, {
+  gameStore.startPuzzle(randomDiagonalNote(), quality.value, {
     noDegreeLabels: noDegreeLabels.value,
     noPianoKeyboard: noPianoKeyboard.value,
   })
