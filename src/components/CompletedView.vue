@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { sessionMultiplier } from '@/music/scoring'
+import { randomDiagonalNote } from '@/music/note'
 import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 
@@ -52,7 +53,7 @@ onMounted(() => {
 function playAgain() {
   if (session.value.phase !== 'completed') return
   const { puzzle, options } = session.value
-  gameStore.startPuzzle(puzzle.diagonalNote, puzzle.quality, options)
+  gameStore.startPuzzle(randomDiagonalNote(), puzzle.quality, options)
 }
 
 function backToMenu() {

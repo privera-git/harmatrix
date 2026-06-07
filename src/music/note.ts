@@ -53,6 +53,14 @@ export function isSameSpelling(a: string, b: string): boolean {
   return na.pc === nb.pc
 }
 
+const DIAGONAL_ACCIDENTALS: Accidental[] = ['b', '', '#']
+
+export function randomDiagonalNote(): string {
+  const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)]!
+  const acc = DIAGONAL_ACCIDENTALS[Math.floor(Math.random() * DIAGONAL_ACCIDENTALS.length)]!
+  return letter + acc
+}
+
 export function enharmonicsOf(note: string): string[] {
   const n = Note.get(note)
   if (n.empty) return []
