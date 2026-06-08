@@ -13,7 +13,7 @@ const noDegreeLabels = ref(false)
 const noPianoKeyboard = ref(false)
 
 const learning = computed(() => state.value.learning)
-const puzzlesPlayed = computed(() => state.value.currentSubStageSession.puzzlesPlayed)
+const perfectStreak = computed(() => state.value.currentSubStageSession.perfectStreak)
 const streak = computed(() => state.value.practiceStreak)
 
 const quality = computed(() => {
@@ -37,7 +37,7 @@ function start() {
 
     <main class="idle-main">
       <div class="learning-position">
-        Stage {{ learning.stage }} · Sub-stage {{ learning.subStage }} ({{ puzzlesPlayed }} /
+        Stage {{ learning.stage }} · Sub-stage {{ learning.subStage }} ({{ perfectStreak }} /
         {{ SUB_STAGE_SESSION_SIZE }})
       </div>
       <div class="quality-label">Quality: {{ quality }}</div>
