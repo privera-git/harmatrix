@@ -18,6 +18,7 @@ type GameSession =
   | {
       phase: 'completed'
       puzzle: MatrixPuzzle
+      answers: (string | null)[][]
       results: AnswerResult[][]
       score: number
       options: ScoringOptions
@@ -81,6 +82,7 @@ export const useGameStore = defineStore('game', () => {
     session.value = {
       phase: 'completed',
       puzzle,
+      answers,
       results,
       score: scoreSession(nonGivenResults, options),
       options,

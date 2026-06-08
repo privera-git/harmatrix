@@ -7,6 +7,7 @@ const props = defineProps<{
   cells: MatrixCell[][]
   mode: 'input' | 'results'
   results?: AnswerResult[][]
+  correctCells?: MatrixCell[][]
   activeCell?: { row: number; col: number }
   showDegreeLabels: boolean
 }>()
@@ -26,6 +27,10 @@ const RESULT_SYMBOL: Record<AnswerResult, string> = {
 
 function resultFor(cell: MatrixCell): AnswerResult | undefined {
   return props.results?.[cell.row]?.[cell.col]
+}
+
+function correctNoteFor(cell: MatrixCell): string | undefined {
+  return props.correctCells?.[cell.row]?.[cell.col]?.note
 }
 
 function isActive(cell: MatrixCell): boolean {
@@ -50,7 +55,18 @@ function handleClick(cell: MatrixCell) {
           given: cell.isGiven,
           active: mode === 'input' && isActive(cell),
           clickable: mode === 'input' && !cell.isGiven,
+          'result-correct': mode === 'results' && !cell.isGiven && resultFor(cell) === 'correct',
+          'result-enharmonic': mode === 'results' && !cell.isGiven && resultFor(cell) === 'enharmonic',
+          'result-wrong': mode === 'results' && !cell.isGiven && resultFor(cell) === 'wrong',
         }"
+        :title="
+          mode === 'results' &&
+          !cell.isGiven &&
+          (resultFor(cell) === 'wrong' || resultFor(cell) === 'enharmonic') &&
+          correctNoteFor(cell)
+            ? `Expected: ${correctNoteFor(cell)}`
+            : undefined
+        "
         @click="handleClick(cell)"
       >
         <span class="cell-note">{{ cell.note }}</span>
@@ -109,5 +125,31 @@ function handleClick(cell: MatrixCell) {
 
 .cell-result {
   font-size: 0.7rem;
+}
+
+.result-correct {
+  background-color: rgba(0, 140, 60, 0.18);
+}
+
+.result-enharmonic {
+  background-color: rgba(210, 100, 0, 0.18);
+}
+
+.result-wrong {
+  background-color: rgba(180, 0, 0, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  .result-correct {
+    background-color: rgba(46, 204, 113, 0.2);
+  }
+
+  .result-enharmonic {
+    background-color: rgba(243, 156, 18, 0.2);
+  }
+
+  .result-wrong {
+    background-color: rgba(231, 76, 60, 0.2);
+  }
 }
 </style>
