@@ -2,7 +2,9 @@
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
+import { useProgressStore } from '@/stores/progress'
 import { FEATURES } from '@/config/features'
+import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
 import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import NotePicker from '@/components/NotePicker.vue'
@@ -10,7 +12,11 @@ import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import type { MatrixCell } from '@/music/matrix'
 
 const gameStore = useGameStore()
+const progressStore = useProgressStore()
 const { session } = storeToRefs(gameStore)
+const { state: progressState } = storeToRefs(progressStore)
+
+const perfectStreak = computed(() => progressState.value.currentSubStageSession.perfectStreak)
 
 const activeCell = ref<{ row: number; col: number } | null>(null)
 
@@ -90,6 +96,8 @@ function submit() {
         @cell-click="onCellClick"
       />
 
+      <div class="progress-indicator">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</div>
+
       <PianoKeyboard v-if="showPiano" :active-note="activeCellNote" />
 
       <NotePicker v-model="activeCellNote" :disabled="activeCell === null" />
@@ -142,6 +150,11 @@ function submit() {
   align-items: center;
   gap: 1.25rem;
   padding: 1.5rem 0;
+}
+
+.progress-indicator {
+  font-size: 0.85rem;
+  color: #666;
 }
 
 .submit-btn {

@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { sessionMultiplier } from '@/music/scoring'
+import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
 import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import type { MatrixCell } from '@/music/matrix'
@@ -11,6 +12,9 @@ import type { MatrixCell } from '@/music/matrix'
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
 const { session } = storeToRefs(gameStore)
+const { state: progressState } = storeToRefs(progressStore)
+
+const perfectStreak = computed(() => progressState.value.currentSubStageSession.perfectStreak)
 
 const displayCells = computed<MatrixCell[][]>(() => {
   if (session.value.phase !== 'completed') return []
@@ -82,7 +86,10 @@ function backToMenu() {
 
     <main class="completed-main">
       <div class="score-section">
-        <div class="score-total">Score: {{ session.score }}</div>
+        <div class="score-total">
+          <span>Score: {{ session.score }}</span>
+          <span class="score-streak">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
+        </div>
         <div class="score-breakdown">
           <span>✓ {{ breakdown.correct }}</span>
           <span>≈ {{ breakdown.enharmonic }}</span>
@@ -143,8 +150,17 @@ function backToMenu() {
 }
 
 .score-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   font-size: 1.1rem;
   font-weight: 600;
+}
+
+.score-streak {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #666;
 }
 
 .score-breakdown {
