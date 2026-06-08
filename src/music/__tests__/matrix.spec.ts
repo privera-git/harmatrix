@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateMatrix } from '@/music/matrix'
+import { generateMatrix, intervalToDegreeLabel } from '@/music/matrix'
 import type { MatrixPuzzle } from '@/music/matrix'
 
 const col = (puzzle: MatrixPuzzle, c: number) =>
@@ -67,6 +67,62 @@ describe('generateMatrix — cell structure', () => {
         expect(puzzle.cells[r]?.[c]?.col).toBe(c)
       }
     }
+  })
+})
+
+describe('intervalToDegreeLabel', () => {
+  it('returns numeric string for perfect and major intervals', () => {
+    expect(intervalToDegreeLabel('1P')).toBe('1')
+    expect(intervalToDegreeLabel('5P')).toBe('5')
+    expect(intervalToDegreeLabel('3M')).toBe('3')
+    expect(intervalToDegreeLabel('9M')).toBe('9')
+  })
+
+  it('prepends ♭ for minor intervals', () => {
+    expect(intervalToDegreeLabel('3m')).toBe('♭3')
+    expect(intervalToDegreeLabel('7m')).toBe('♭7')
+    expect(intervalToDegreeLabel('9m')).toBe('♭9')
+  })
+
+  it('prepends ♯ for augmented intervals', () => {
+    expect(intervalToDegreeLabel('5A')).toBe('♯5')
+    expect(intervalToDegreeLabel('9A')).toBe('♯9')
+    expect(intervalToDegreeLabel('11A')).toBe('♯11')
+  })
+
+  it('returns °7 for diminished 7th', () => {
+    expect(intervalToDegreeLabel('7d')).toBe('°7')
+  })
+
+  it('prepends ♭ for other diminished intervals', () => {
+    expect(intervalToDegreeLabel('5d')).toBe('♭5')
+    expect(intervalToDegreeLabel('4d')).toBe('♭4')
+  })
+})
+
+describe('generateMatrix — degrees', () => {
+  it('major triad has degrees [1, 3, 5]', () => {
+    expect(generateMatrix('C', 'major')?.degrees).toEqual(['1', '3', '5'])
+  })
+
+  it('minor triad has degrees [1, ♭3, 5]', () => {
+    expect(generateMatrix('C', 'minor')?.degrees).toEqual(['1', '♭3', '5'])
+  })
+
+  it('dom7 has degrees [1, 3, 5, ♭7]', () => {
+    expect(generateMatrix('C', 'dom7')?.degrees).toEqual(['1', '3', '5', '♭7'])
+  })
+
+  it('dim7 has degrees [1, ♭3, ♭5, °7]', () => {
+    expect(generateMatrix('C', 'dim7')?.degrees).toEqual(['1', '♭3', '♭5', '°7'])
+  })
+
+  it('alt chord has degrees [1, 3, ♭5, ♯5, ♭7, ♭9, ♯9]', () => {
+    expect(generateMatrix('C', 'alt')?.degrees).toEqual(['1', '3', '♭5', '♯5', '♭7', '♭9', '♯9'])
+  })
+
+  it('ionian has degrees [1, 2, 3, 4, 5, 6, 7]', () => {
+    expect(generateMatrix('C', 'ionian')?.degrees).toEqual(['1', '2', '3', '4', '5', '6', '7'])
   })
 })
 

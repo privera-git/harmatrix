@@ -93,6 +93,7 @@ function submit() {
         mode="input"
         :active-cell="activeCell ?? undefined"
         :show-degree-labels="showDegreeLabels"
+        :degrees="session.puzzle.degrees"
         @cell-click="onCellClick"
       />
 

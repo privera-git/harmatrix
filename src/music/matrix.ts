@@ -15,17 +15,32 @@ export interface MatrixPuzzle {
   quality: ChordQuality | ScaleMode
   diagonalNote: string
   size: number
+  degrees: string[]
   cells: MatrixCell[][]
+}
+
+// Converts interval notation (e.g. '3m', '5d', '9A') to a degree label (e.g. '♭3', '♭5', '♯9').
+export function intervalToDegreeLabel(interval: string): string {
+  const match = interval.match(/^(\d+)([A-Za-z])$/)
+  if (!match) return interval
+  const [, num, qual] = match
+  if (qual === 'A') return `♯${num}`
+  if (qual === 'm') return `♭${num}`
+  if (qual === 'd') return num === '7' ? '°7' : `♭${num}`
+  return num! // P (perfect) or M (major) — no accidental
 }
 
 export function generateMatrix(
   diagonalNote: string,
   quality: ChordQuality | ScaleMode,
 ): MatrixPuzzle | null {
-  const size =
+  const intervals =
     quality in CHORD_CATALOG
-      ? CHORD_CATALOG[quality as ChordQuality].intervals.length
-      : SCALE_CATALOG[quality as ScaleMode].intervals.length
+      ? CHORD_CATALOG[quality as ChordQuality].intervals
+      : SCALE_CATALOG[quality as ScaleMode].intervals
+
+  const size = intervals.length
+  const degrees = intervals.map(intervalToDegreeLabel)
 
   const columns: string[][] = []
   for (let col = 0; col < size; col++) {
@@ -49,5 +64,5 @@ export function generateMatrix(
     })),
   )
 
-  return { quality, diagonalNote, size, cells }
+  return { quality, diagonalNote, size, degrees, cells }
 }

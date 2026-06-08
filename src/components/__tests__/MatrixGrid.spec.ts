@@ -175,5 +175,27 @@ describe('MatrixGrid', () => {
       })
       expect(wrapper.findAll('.degree-label')).toHaveLength(0)
     })
+
+    it('uses degrees prop values when provided', () => {
+      const wrapper = mount(MatrixGrid, {
+        props: {
+          cells: makeCells(3),
+          mode: 'input',
+          showDegreeLabels: true,
+          degrees: ['1', '3', '5'],
+        },
+      })
+      const labels = wrapper.findAll('.degree-label').map((el) => el.text())
+      // displayRows reverses: row2 → top, row1 → middle, row0 → bottom
+      expect(labels).toEqual(['5', '3', '1'])
+    })
+
+    it('falls back to row+1 when degrees prop is absent', () => {
+      const wrapper = mount(MatrixGrid, {
+        props: { cells: makeCells(3), mode: 'input', showDegreeLabels: true },
+      })
+      const labels = wrapper.findAll('.degree-label').map((el) => el.text())
+      expect(labels).toEqual(['3', '2', '1'])
+    })
   })
 })

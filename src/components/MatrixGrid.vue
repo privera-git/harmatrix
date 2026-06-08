@@ -10,6 +10,7 @@ const props = defineProps<{
   correctCells?: MatrixCell[][]
   activeCell?: { row: number; col: number }
   showDegreeLabels: boolean
+  degrees?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -54,7 +55,9 @@ function handleClick(cell: MatrixCell) {
 <template>
   <div class="matrix-grid">
     <div v-for="row in displayRows" :key="row[0]?.row ?? 0" class="matrix-row">
-      <span v-if="showDegreeLabels" class="degree-label">{{ (row[0]?.row ?? 0) + 1 }}</span>
+      <span v-if="showDegreeLabels" class="degree-label">{{
+        degrees?.[row[0]?.row ?? 0] ?? String((row[0]?.row ?? 0) + 1)
+      }}</span>
       <div
         v-for="cell in row"
         :key="cell.col"
