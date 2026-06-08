@@ -66,17 +66,19 @@ describe('recordSessionResults', () => {
     expect(store.state.stats['major']).toEqual({ correct: 2, enharmonic: 0, wrong: 1, total: 3 })
   })
 
-  it('tracks puzzles played in current sub-stage session', () => {
+  it('increments perfectStreak on each consecutive perfect puzzle', () => {
     const store = useProgressStore()
     store.recordSessionResults('major', PERFECT)
-    expect(store.state.currentSubStageSession.puzzlesPlayed).toBe(1)
-    expect(store.state.currentSubStageSession.perfectPuzzles).toBe(1)
+    expect(store.state.currentSubStageSession.perfectStreak).toBe(1)
+    store.recordSessionResults('major', PERFECT)
+    expect(store.state.currentSubStageSession.perfectStreak).toBe(2)
   })
 
-  it('does not count imperfect puzzle as perfect', () => {
+  it('resets perfectStreak to 0 on imperfect puzzle', () => {
     const store = useProgressStore()
+    store.recordSessionResults('major', PERFECT)
     store.recordSessionResults('major', IMPERFECT)
-    expect(store.state.currentSubStageSession.perfectPuzzles).toBe(0)
+    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
   })
 
   it('advances sub-stage after N perfect puzzles', () => {
@@ -87,22 +89,23 @@ describe('recordSessionResults', () => {
     expect(store.state.learning.subStage).toBe(2)
   })
 
-  it('resets session counter after N puzzles regardless of outcome', () => {
-    const store = useProgressStore()
-    for (let i = 0; i < SUB_STAGE_SESSION_SIZE; i++) {
-      store.recordSessionResults('major', IMPERFECT)
-    }
-    expect(store.state.currentSubStageSession.puzzlesPlayed).toBe(0)
-    expect(store.state.learning.subStage).toBe(1)
-  })
-
-  it('does not advance if not all N puzzles are perfect', () => {
+  it('any imperfect puzzle resets streak to 0 and does not advance', () => {
     const store = useProgressStore()
     for (let i = 0; i < SUB_STAGE_SESSION_SIZE - 1; i++) {
       store.recordSessionResults('major', PERFECT)
     }
     store.recordSessionResults('major', IMPERFECT)
+    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
     expect(store.state.learning.subStage).toBe(1)
+  })
+
+  it('streak resets to 0 after advancing and must reach N again', () => {
+    const store = useProgressStore()
+    for (let i = 0; i < SUB_STAGE_SESSION_SIZE; i++) {
+      store.recordSessionResults('major', PERFECT)
+    }
+    expect(store.state.learning.subStage).toBe(2)
+    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
   })
 })
 

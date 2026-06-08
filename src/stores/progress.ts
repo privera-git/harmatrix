@@ -11,8 +11,7 @@ interface LearningPosition {
 }
 
 interface SubStageSession {
-  puzzlesPlayed: number
-  perfectPuzzles: number
+  perfectStreak: number
 }
 
 interface QualityStats {
@@ -38,7 +37,7 @@ const STORAGE_KEY = 'harmatrix:progress'
 function makeDefaultState(): ProgressState {
   return {
     learning: { stage: 1, subStage: 1 },
-    currentSubStageSession: { puzzlesPlayed: 0, perfectPuzzles: 0 },
+    currentSubStageSession: { perfectStreak: 0 },
     unlockedContent: [],
     stats: {},
     practiceStreak: 0,
@@ -49,7 +48,13 @@ function makeDefaultState(): ProgressState {
 function loadState(): ProgressState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as ProgressState) : makeDefaultState()
+    if (!raw) return makeDefaultState()
+    const parsed = JSON.parse(raw) as ProgressState
+    // Migrate from block-session model (puzzlesPlayed/perfectPuzzles → perfectStreak)
+    if (!('perfectStreak' in (parsed.currentSubStageSession ?? {}))) {
+      parsed.currentSubStageSession = { perfectStreak: 0 }
+    }
+    return parsed
   } catch {
     return makeDefaultState()
   }
@@ -88,14 +93,14 @@ export const useProgressStore = defineStore('progress', () => {
     }
 
     const isPerfect = results.length > 0 && results.every((r) => r === 'correct')
-    state.value.currentSubStageSession.puzzlesPlayed++
-    if (isPerfect) state.value.currentSubStageSession.perfectPuzzles++
-
-    if (state.value.currentSubStageSession.puzzlesPlayed === SUB_STAGE_SESSION_SIZE) {
-      const allPerfect =
-        state.value.currentSubStageSession.perfectPuzzles === SUB_STAGE_SESSION_SIZE
-      state.value.currentSubStageSession = { puzzlesPlayed: 0, perfectPuzzles: 0 }
-      if (allPerfect) advanceLearning()
+    if (isPerfect) {
+      state.value.currentSubStageSession.perfectStreak++
+      if (state.value.currentSubStageSession.perfectStreak === SUB_STAGE_SESSION_SIZE) {
+        state.value.currentSubStageSession = { perfectStreak: 0 }
+        advanceLearning()
+      }
+    } else {
+      state.value.currentSubStageSession = { perfectStreak: 0 }
     }
   }
 
