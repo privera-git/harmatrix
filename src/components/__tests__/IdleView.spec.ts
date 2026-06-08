@@ -38,10 +38,9 @@ describe('IdleView', () => {
   })
 
   describe('learning position', () => {
-    it('shows default stage 1 · sub-stage 1 on fresh store', () => {
+    it('shows stage name on fresh store', () => {
       const wrapper = mountView()
-      expect(wrapper.text()).toContain('Stage 1')
-      expect(wrapper.text()).toContain('Sub-stage 1')
+      expect(wrapper.text()).toContain('Triads')
     })
 
     it('shows quality matching current learning position', () => {

@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
-import { CURRICULUM, SUB_STAGE_SESSION_SIZE } from '@/config/game'
+import { CURRICULUM, SUB_STAGE_SESSION_SIZE, STAGE_NAMES } from '@/config/game'
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
@@ -14,6 +14,7 @@ const noPianoKeyboard = ref(false)
 
 const learning = computed(() => state.value.learning)
 const perfectStreak = computed(() => state.value.currentSubStageSession.perfectStreak)
+const stageName = computed(() => STAGE_NAMES[learning.value.stage - 1] ?? `Stage ${learning.value.stage}`)
 const streak = computed(() => state.value.practiceStreak)
 
 const quality = computed(() => {
@@ -36,11 +37,11 @@ function start() {
     </header>
 
     <main class="idle-main">
-      <div class="learning-position">
-        Stage {{ learning.stage }} · Sub-stage {{ learning.subStage }} ({{ perfectStreak }} /
-        {{ SUB_STAGE_SESSION_SIZE }})
+      <div class="learning-position">{{ stageName }}</div>
+      <div class="quality-label">
+        <span>Quality: {{ quality }}</span>
+        <span class="quality-progress">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
       </div>
-      <div class="quality-label">Quality: {{ quality }}</div>
 
       <section class="difficulty-section">
         <div class="difficulty-title">Difficulty</div>
@@ -96,9 +97,19 @@ function start() {
 }
 
 .quality-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   font-size: 1rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.quality-progress {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #666;
+  text-transform: none;
 }
 
 .difficulty-section {
