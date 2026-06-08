@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { generateMatrix, intervalToDegreeLabel } from '@/music/matrix'
 import type { MatrixPuzzle } from '@/music/matrix'
+import { parseNote } from '@/music/note'
 
 const col = (puzzle: MatrixPuzzle, c: number) =>
   puzzle.cells.map((row) => row[c]?.note ?? '')
@@ -136,5 +137,49 @@ describe('generateMatrix — additional qualities', () => {
 
   it('returns null for invalid note', () => {
     expect(generateMatrix('X', 'major')).toBeNull()
+  })
+})
+
+describe('generateMatrix — enharmonic substitution for unsolvable columns', () => {
+  it('col 2 of Fb aug uses E on the diagonal (enharmonic substitution)', () => {
+    const puzzle = generateMatrix('Fb', 'aug')
+    expect(puzzle).not.toBeNull()
+    expect(puzzle!.cells[2]?.[2]?.note).toBe('E')
+  })
+
+  it('col 2 of Fb aug returns [Ab, C, E] (not the triple-accidental column)', () => {
+    const puzzle = generateMatrix('Fb', 'aug')!
+    expect(col(puzzle, 2)).toEqual(['Ab', 'C', 'E'])
+  })
+
+  it('col 0 of Fb aug is unchanged — Fb remains on diagonal', () => {
+    const puzzle = generateMatrix('Fb', 'aug')!
+    expect(puzzle.cells[0]?.[0]?.note).toBe('Fb')
+    expect(col(puzzle, 0)).toEqual(['Fb', 'Ab', 'C'])
+  })
+
+  it('col 1 of Fb aug is unchanged — Fb remains on diagonal', () => {
+    const puzzle = generateMatrix('Fb', 'aug')!
+    expect(puzzle.cells[1]?.[1]?.note).toBe('Fb')
+    expect(col(puzzle, 1)).toEqual(['Dbb', 'Fb', 'Ab'])
+  })
+
+  it('no triple accidentals in any cell of the fixed Fb aug matrix', () => {
+    const puzzle = generateMatrix('Fb', 'aug')!
+    const notes = puzzle.cells.flat().map((c) => c.note)
+    for (const note of notes) {
+      expect(parseNote(note), `note "${note}" has a triple accidental`).not.toBeNull()
+    }
+  })
+
+  it('safe puzzle without substitution is not affected (C aug — diagonal unchanged)', () => {
+    const puzzle = generateMatrix('C', 'aug')!
+    for (let i = 0; i < puzzle.size; i++) {
+      expect(puzzle.cells[i]?.[i]?.note).toBe('C')
+    }
+    const notes = puzzle.cells.flat().map((c) => c.note)
+    for (const note of notes) {
+      expect(parseNote(note), `note "${note}" has a triple accidental`).not.toBeNull()
+    }
   })
 })
