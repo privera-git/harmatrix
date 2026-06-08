@@ -33,6 +33,14 @@ function correctNoteFor(cell: MatrixCell): string | undefined {
   return props.correctCells?.[cell.row]?.[cell.col]?.note
 }
 
+function tooltipFor(cell: MatrixCell): string | undefined {
+  if (props.mode !== 'results' || cell.isGiven) return undefined
+  const result = resultFor(cell)
+  if (result !== 'wrong' && result !== 'enharmonic') return undefined
+  const note = correctNoteFor(cell)
+  return note ? `Expected: ${note}` : undefined
+}
+
 function isActive(cell: MatrixCell): boolean {
   return props.activeCell?.row === cell.row && props.activeCell?.col === cell.col
 }
@@ -59,14 +67,8 @@ function handleClick(cell: MatrixCell) {
           'result-enharmonic': mode === 'results' && !cell.isGiven && resultFor(cell) === 'enharmonic',
           'result-wrong': mode === 'results' && !cell.isGiven && resultFor(cell) === 'wrong',
         }"
-        :title="
-          mode === 'results' &&
-          !cell.isGiven &&
-          (resultFor(cell) === 'wrong' || resultFor(cell) === 'enharmonic') &&
-          correctNoteFor(cell)
-            ? `Expected: ${correctNoteFor(cell)}`
-            : undefined
-        "
+        :data-tooltip="tooltipFor(cell)"
+        :tabindex="tooltipFor(cell) ? 0 : undefined"
         @click="handleClick(cell)"
       >
         <span class="cell-note">{{ cell.note }}</span>
@@ -99,6 +101,7 @@ function handleClick(cell: MatrixCell) {
 }
 
 .matrix-cell {
+  position: relative;
   width: 3rem;
   height: 3rem;
   border: 1px solid #ccc;
@@ -108,6 +111,24 @@ function handleClick(cell: MatrixCell) {
   gap: 2px;
   font-size: 0.9rem;
   user-select: none;
+}
+
+.matrix-cell[data-tooltip]:hover::after,
+.matrix-cell[data-tooltip]:focus::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 3px 7px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  outline: none;
 }
 
 .matrix-cell.clickable {
