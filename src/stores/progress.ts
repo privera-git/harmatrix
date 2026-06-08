@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { CURRICULUM, SUB_STAGE_SESSION_SIZE } from '@/config/game'
+import { randomDiagonalNote } from '@/music/note'
 import type { AnswerResult } from '@/music/scoring'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
@@ -28,6 +29,7 @@ interface ProgressState {
   stats: Partial<Record<ChordQuality | ScaleMode, QualityStats>>
   practiceStreak: number
   lastPracticeDate: string
+  diagonalNoteHistory: string[]
 }
 
 export type { ProgressState, QualityStats }
@@ -42,6 +44,7 @@ function makeDefaultState(): ProgressState {
     stats: {},
     practiceStreak: 0,
     lastPracticeDate: '',
+    diagonalNoteHistory: [],
   }
 }
 
@@ -141,9 +144,16 @@ export const useProgressStore = defineStore('progress', () => {
     state.value.lastPracticeDate = today
   }
 
+  function nextDiagonalNote(): string {
+    const history = state.value.diagonalNoteHistory ?? []
+    const note = randomDiagonalNote(history)
+    state.value.diagonalNoteHistory = [...history, note].slice(-3)
+    return note
+  }
+
   function resetProgress(): void {
     state.value = makeDefaultState()
   }
 
-  return { state, recordSessionResults, advanceLearning, unlockContent, updateStreak, resetProgress }
+  return { state, recordSessionResults, advanceLearning, unlockContent, updateStreak, nextDiagonalNote, resetProgress }
 })
