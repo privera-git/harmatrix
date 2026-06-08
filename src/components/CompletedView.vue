@@ -84,9 +84,9 @@ function backToMenu() {
       <div class="score-section">
         <div class="score-total">Score: {{ session.score }}</div>
         <div class="score-breakdown">
-          <span>✓ {{ breakdown.correct }}</span>
-          <span>≈ {{ breakdown.enharmonic }}</span>
-          <span>✗ {{ breakdown.wrong }}</span>
+          <span class="breakdown-correct">✓ {{ breakdown.correct }}</span>
+          <span class="breakdown-enharmonic">≈ {{ breakdown.enharmonic }}</span>
+          <span class="breakdown-wrong">✗ {{ breakdown.wrong }}</span>
           <span>× {{ multiplier }}</span>
         </div>
       </div>
@@ -152,6 +152,32 @@ function backToMenu() {
   gap: 1rem;
   font-size: 0.95rem;
   color: #555;
+}
+
+.breakdown-correct {
+  color: #1a7a3a;
+}
+
+.breakdown-enharmonic {
+  color: #b35c00;
+}
+
+.breakdown-wrong {
+  color: #a02020;
+}
+
+@media (prefers-color-scheme: dark) {
+  .breakdown-correct {
+    color: #2ecc71;
+  }
+
+  .breakdown-enharmonic {
+    color: #f39c12;
+  }
+
+  .breakdown-wrong {
+    color: #e74c3c;
+  }
 }
 
 .action-row {
