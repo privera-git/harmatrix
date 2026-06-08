@@ -1,4 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { parseNote } from '@/music/note'
+
+const props = defineProps<{
+  activeNote?: string | null
+}>()
+
+const activeChroma = computed<number | null>(() => {
+  if (!props.activeNote) return null
+  return parseNote(props.activeNote)?.chroma ?? null
+})
+
 const WHITE_KEY_WIDTH = 36
 
 const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
@@ -16,13 +28,19 @@ const BLACK_KEYS = [
 <template>
   <div class="piano-keyboard">
     <div class="keys-container">
-      <div v-for="note in WHITE_NOTES" :key="note" class="key white-key">
+      <div
+        v-for="note in WHITE_NOTES"
+        :key="note"
+        class="key white-key"
+        :class="{ active: parseNote(note)?.chroma === activeChroma }"
+      >
         <span class="white-key-label">{{ note }}</span>
       </div>
       <div
         v-for="key in BLACK_KEYS"
         :key="key.note"
         class="key black-key"
+        :class="{ active: parseNote(key.note)?.chroma === activeChroma }"
         :style="{ left: key.leftPx + 'px' }"
       />
     </div>
@@ -55,9 +73,17 @@ const BLACK_KEYS = [
   padding-bottom: 4px;
 }
 
+.white-key.active {
+  background: #0066cc;
+}
+
 .white-key-label {
   font-size: 0.65rem;
   color: #666;
+}
+
+.white-key.active .white-key-label {
+  color: #fff;
 }
 
 .black-key {
@@ -67,5 +93,9 @@ const BLACK_KEYS = [
   background: #222;
   top: 0;
   z-index: 1;
+}
+
+.black-key.active {
+  background: #0066cc;
 }
 </style>

@@ -90,7 +90,7 @@ function submit() {
         @cell-click="onCellClick"
       />
 
-      <PianoKeyboard v-if="showPiano" />
+      <PianoKeyboard v-if="showPiano" :active-note="activeCellNote" />
 
       <NotePicker v-model="activeCellNote" :disabled="activeCell === null" />
 
