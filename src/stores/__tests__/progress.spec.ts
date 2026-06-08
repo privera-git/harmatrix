@@ -207,6 +207,51 @@ describe('updateStreak', () => {
   })
 })
 
+describe('jumpToPosition', () => {
+  it('jumps to a valid stage and sub-stage', () => {
+    const store = useProgressStore()
+    store.jumpToPosition(1, 3)
+    expect(store.state.learning).toEqual({ stage: 1, subStage: 3 })
+  })
+
+  it('jumps to stage 2 sub-stage 5 when valid', () => {
+    const store = useProgressStore()
+    store.jumpToPosition(2, 5)
+    expect(store.state.learning).toEqual({ stage: 2, subStage: 5 })
+  })
+
+  it('resets perfectStreak to 0 on jump', () => {
+    const store = useProgressStore()
+    store.recordSessionResults('major', PERFECT)
+    store.jumpToPosition(1, 2)
+    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
+  })
+
+  it('falls back to 1,1 when stage does not exist in curriculum', () => {
+    const store = useProgressStore()
+    store.jumpToPosition(99, 1)
+    expect(store.state.learning).toEqual({ stage: 1, subStage: 1 })
+  })
+
+  it('falls back to 1,1 when sub-stage is out of range', () => {
+    const store = useProgressStore()
+    store.jumpToPosition(1, 99)
+    expect(store.state.learning).toEqual({ stage: 1, subStage: 1 })
+  })
+
+  it('falls back to 1,1 for stage 0', () => {
+    const store = useProgressStore()
+    store.jumpToPosition(0, 1)
+    expect(store.state.learning).toEqual({ stage: 1, subStage: 1 })
+  })
+
+  it('falls back to 1,1 for sub-stage 0', () => {
+    const store = useProgressStore()
+    store.jumpToPosition(1, 0)
+    expect(store.state.learning).toEqual({ stage: 1, subStage: 1 })
+  })
+})
+
 describe('persistence', () => {
   it('saves state to localStorage on mutation', () => {
     const store = useProgressStore()

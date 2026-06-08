@@ -151,9 +151,16 @@ export const useProgressStore = defineStore('progress', () => {
     return note
   }
 
+  function jumpToPosition(stage: number, subStage: number): void {
+    const stageQualities = CURRICULUM[stage - 1]
+    const valid = stageQualities !== undefined && subStage >= 1 && subStage <= stageQualities.length
+    state.value.learning = valid ? { stage, subStage } : { stage: 1, subStage: 1 }
+    state.value.currentSubStageSession = { perfectStreak: 0 }
+  }
+
   function resetProgress(): void {
     state.value = makeDefaultState()
   }
 
-  return { state, recordSessionResults, advanceLearning, unlockContent, updateStreak, nextDiagonalNote, resetProgress }
+  return { state, recordSessionResults, advanceLearning, unlockContent, updateStreak, nextDiagonalNote, resetProgress, jumpToPosition }
 })
