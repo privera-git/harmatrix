@@ -104,6 +104,7 @@ function backToMenu() {
         :results="session.results"
         :correct-cells="session.puzzle.cells"
         :show-degree-labels="true"
+        :degrees="session.puzzle.degrees"
       />
 
       <div class="action-row">
