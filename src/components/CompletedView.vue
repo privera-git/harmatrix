@@ -4,13 +4,13 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { sessionMultiplier } from '@/music/scoring'
-import { randomDiagonalNote } from '@/music/note'
 import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
 const { session } = storeToRefs(gameStore)
+
 
 const breakdown = computed(() => {
   if (session.value.phase !== 'completed') return { correct: 0, enharmonic: 0, wrong: 0 }
@@ -53,7 +53,7 @@ onMounted(() => {
 function playAgain() {
   if (session.value.phase !== 'completed') return
   const { puzzle, options } = session.value
-  gameStore.startPuzzle(randomDiagonalNote(), puzzle.quality, options)
+  gameStore.startPuzzle(progressStore.nextDiagonalNote(), puzzle.quality, options)
 }
 
 function backToMenu() {

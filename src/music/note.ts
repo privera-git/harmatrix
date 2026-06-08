@@ -54,11 +54,12 @@ export function isSameSpelling(a: string, b: string): boolean {
 }
 
 const DIAGONAL_ACCIDENTALS: Accidental[] = ['b', '', '#']
+const DIAGONAL_POOL = LETTERS.flatMap((l) => DIAGONAL_ACCIDENTALS.map((a) => l + a))
 
-export function randomDiagonalNote(): string {
-  const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)]!
-  const acc = DIAGONAL_ACCIDENTALS[Math.floor(Math.random() * DIAGONAL_ACCIDENTALS.length)]!
-  return letter + acc
+export function randomDiagonalNote(exclude: string[] = []): string {
+  const pool = exclude.length > 0 ? DIAGONAL_POOL.filter((n) => !exclude.includes(n)) : DIAGONAL_POOL
+  const candidates = pool.length > 0 ? pool : DIAGONAL_POOL
+  return candidates[Math.floor(Math.random() * candidates.length)]!
 }
 
 export function enharmonicsOf(note: string): string[] {
