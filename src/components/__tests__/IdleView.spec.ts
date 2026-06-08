@@ -58,9 +58,9 @@ describe('IdleView', () => {
       expect(wrapper.text()).toContain('minor')
     })
 
-    it('shows puzzles played from store', async () => {
+    it('shows perfect streak from store', async () => {
       const progress = useProgressStore()
-      progress.state.currentSubStageSession.puzzlesPlayed = 4
+      progress.state.currentSubStageSession.perfectStreak = 4
       const wrapper = mountView()
       expect(wrapper.text()).toContain('4 /')
     })

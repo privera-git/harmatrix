@@ -6,11 +6,24 @@ import { useProgressStore } from '@/stores/progress'
 import { sessionMultiplier } from '@/music/scoring'
 import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
+import type { MatrixCell } from '@/music/matrix'
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
 const { session } = storeToRefs(gameStore)
 
+const displayCells = computed<MatrixCell[][]>(() => {
+  if (session.value.phase !== 'completed') return []
+  const { puzzle, answers } = session.value
+  return puzzle.cells.map((row, r) =>
+    row.map(
+      (cell, c): MatrixCell => ({
+        ...cell,
+        note: cell.isGiven ? cell.note : (answers[r]?.[c] ?? ''),
+      }),
+    ),
+  )
+})
 
 const breakdown = computed(() => {
   if (session.value.phase !== 'completed') return { correct: 0, enharmonic: 0, wrong: 0 }
@@ -79,9 +92,10 @@ function backToMenu() {
       </div>
 
       <MatrixGrid
-        :cells="session.puzzle.cells"
+        :cells="displayCells"
         mode="results"
         :results="session.results"
+        :correct-cells="session.puzzle.cells"
         :show-degree-labels="true"
       />
 
