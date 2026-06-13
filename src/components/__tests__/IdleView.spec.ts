@@ -202,6 +202,15 @@ describe('IdleView', () => {
       expect(backBtn).toBeDefined()
     })
 
+    it('hides Back button at Stage 2 when Stage 0 was completed naturally', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 }
+      progress.state.unlockedContent = ['seconds', 'thirds', 'fourthsFifths', 'sixths', 'sevenths', 'ninths', 'alteredExtensions', 'thirteenth']
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.skip-btn')
+      expect(btns.every((b) => !b.text().includes('Interval Basics'))).toBe(true)
+    })
+
     it('hides Back button at Stage 1 (Interval Basics)', () => {
       const wrapper = mountView()
       const btns = wrapper.findAll('.skip-btn')
