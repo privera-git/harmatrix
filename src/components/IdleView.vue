@@ -22,6 +22,7 @@ const stageName = computed(() => STAGE_NAMES[learning.value.stage - 1] ?? `Stage
 const streak = computed(() => state.value.practiceStreak)
 const idleMode = computed(() => state.value.idleMode)
 const isIntroStage = computed(() => learning.value.stage === INTRO_STAGE)
+const isTriadsStage = computed(() => learning.value.stage === INTRO_STAGE + 1)
 
 const quality = computed(() => {
   const stageQualities = CURRICULUM[learning.value.stage - 1]
@@ -45,6 +46,10 @@ function start() {
 
 function skipToTriads(): void {
   progressStore.skipToTriads()
+}
+
+function backToIntervals(): void {
+  progressStore.jumpToPosition(1, 1)
 }
 
 function onFreePlaySelect(selectedQuality: ChordQuality | ScaleMode | IntervalGroup): void {
@@ -118,6 +123,9 @@ function onStageOpen(stageIndex: number): void {
         <button class="start-btn" @click="start">Start</button>
         <button v-if="isIntroStage" class="skip-btn" @click="skipToTriads">
           Skip to Triads →
+        </button>
+        <button v-if="isTriadsStage" class="skip-btn" @click="backToIntervals">
+          ← Back to Interval Basics
         </button>
       </div>
     </main>
