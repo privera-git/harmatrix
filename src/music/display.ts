@@ -1,6 +1,8 @@
 import { CHORD_CATALOG } from './data/chords'
 import type { ChordQuality } from './data/chords'
 import type { ScaleMode } from './data/scales'
+import { INTERVAL_CATALOG } from './data/intervals'
+import type { IntervalGroup } from './data/intervals'
 
 const TRIAD_LABEL: Partial<Record<ChordQuality, string>> = {
   major: 'major triad',
@@ -38,15 +40,18 @@ const SCALE_LABEL: Record<ScaleMode, string> = {
   halfWholeDim: 'half-whole diminished scale',
 }
 
-export function formatQualityLabel(quality: ChordQuality | ScaleMode): string {
+export function formatQualityLabel(quality: ChordQuality | ScaleMode | IntervalGroup): string {
   if (quality in CHORD_CATALOG) {
     const def = CHORD_CATALOG[quality as ChordQuality]
     return TRIAD_LABEL[quality as ChordQuality] ?? def.symbol
   }
+  if (quality in INTERVAL_CATALOG) {
+    return INTERVAL_CATALOG[quality as IntervalGroup].label
+  }
   return SCALE_LABEL[quality as ScaleMode] ?? quality
 }
 
-export function formatPuzzleTitle(note: string, quality: ChordQuality | ScaleMode): string {
+export function formatPuzzleTitle(note: string, quality: ChordQuality | ScaleMode | IntervalGroup): string {
   if (quality in CHORD_CATALOG) {
     const def = CHORD_CATALOG[quality as ChordQuality]
     if (def.intervals.length === 3) {
@@ -54,6 +59,9 @@ export function formatPuzzleTitle(note: string, quality: ChordQuality | ScaleMod
     }
     const symbol = def.symbol.replace(/([b#]\d+)/g, '($1)')
     return `${note}${symbol}`
+  }
+  if (quality in INTERVAL_CATALOG) {
+    return `${note} ${INTERVAL_CATALOG[quality as IntervalGroup].label}`
   }
   return `${note} ${SCALE_LABEL[quality as ScaleMode] ?? quality}`
 }

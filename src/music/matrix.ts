@@ -1,5 +1,6 @@
 import { CHORD_CATALOG, type ChordQuality } from '@/music/data/chords'
 import { SCALE_CATALOG, type ScaleMode } from '@/music/data/scales'
+import { INTERVAL_CATALOG, type IntervalGroup } from '@/music/data/intervals'
 import { buildChord } from '@/music/chord'
 import { buildScale } from '@/music/scale'
 import { findRoot } from '@/music/reverse'
@@ -14,7 +15,7 @@ export interface MatrixCell {
 }
 
 export interface MatrixPuzzle {
-  quality: ChordQuality | ScaleMode
+  quality: ChordQuality | ScaleMode | IntervalGroup
   diagonalNote: string
   size: number
   degrees: string[]
@@ -51,12 +52,14 @@ function bestEnharmonicReplacement(note: string): string | null {
 
 export function generateMatrix(
   diagonalNote: string,
-  quality: ChordQuality | ScaleMode,
+  quality: ChordQuality | ScaleMode | IntervalGroup,
 ): MatrixPuzzle | null {
   const intervals =
     quality in CHORD_CATALOG
       ? CHORD_CATALOG[quality as ChordQuality].intervals
-      : SCALE_CATALOG[quality as ScaleMode].intervals
+      : quality in INTERVAL_CATALOG
+        ? INTERVAL_CATALOG[quality as IntervalGroup].intervals
+        : SCALE_CATALOG[quality as ScaleMode].intervals
 
   const size = intervals.length
   const degrees = intervals.map(intervalToDegreeLabel)
@@ -66,20 +69,24 @@ export function generateMatrix(
     const root = findRoot(diagonalNote, col, quality)
     if (root === null) return null
 
-    let notes =
+    const buildNotes = (r: string) =>
       quality in CHORD_CATALOG
-        ? buildChord(root, quality as ChordQuality)
-        : buildScale(root, quality as ScaleMode)
+        ? buildChord(r, quality as ChordQuality)
+        : quality in INTERVAL_CATALOG
+          ? INTERVAL_CATALOG[quality as IntervalGroup].intervals.flatMap((iv) => {
+              const n = Note.transpose(r, iv)
+              return n ? [n] : []
+            })
+          : buildScale(r, quality as ScaleMode)
+
+    let notes = buildNotes(root)
 
     if (columnIsUnsolvable(notes, col)) {
       const replacement = bestEnharmonicReplacement(diagonalNote)
       if (replacement !== null) {
         const newRoot = findRoot(replacement, col, quality)
         if (newRoot !== null) {
-          notes =
-            quality in CHORD_CATALOG
-              ? buildChord(newRoot, quality as ChordQuality)
-              : buildScale(newRoot, quality as ScaleMode)
+          notes = buildNotes(newRoot)
         }
       }
     }

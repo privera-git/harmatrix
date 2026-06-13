@@ -5,6 +5,7 @@ import { formatQualityLabel } from '@/music/display'
 import type { FreePlayStageAccess } from '@/stores/progress'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
+import type { IntervalGroup } from '@/music/data/intervals'
 
 const props = defineProps<{
   freePlayAccess: FreePlayStageAccess[]
@@ -12,7 +13,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  play: [quality: ChordQuality | ScaleMode]
+  play: [quality: ChordQuality | ScaleMode | IntervalGroup]
   stageOpen: [stageIndex: number]
 }>()
 
@@ -40,7 +41,7 @@ function toggleStage(index: number): void {
   }
 }
 
-function selectSubStage(quality: ChordQuality | ScaleMode, accessible: boolean): void {
+function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, accessible: boolean): void {
   if (!accessible) return
   emit('play', quality)
 }

@@ -1,12 +1,13 @@
 import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { CURRICULUM, SUB_STAGE_SESSION_SIZE } from '@/config/game'
+import { CURRICULUM, SUB_STAGE_SESSION_SIZE, INTRO_STAGE } from '@/config/game'
 import { randomDiagonalNote } from '@/music/note'
 import type { AnswerResult } from '@/music/scoring'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
+import type { IntervalGroup } from '@/music/data/intervals'
 
-type Quality = ChordQuality | ScaleMode
+type Quality = ChordQuality | ScaleMode | IntervalGroup
 
 interface LearningPosition {
   stage: number
@@ -25,6 +26,7 @@ interface QualityStats {
 }
 
 interface ProgressState {
+  storageVersion: number
   learning: LearningPosition
   currentSubStageSession: SubStageSession
   unlockedContent: Array<Quality>
@@ -52,6 +54,7 @@ const STORAGE_KEY = 'harmatrix:progress'
 
 function makeDefaultState(): ProgressState {
   return {
+    storageVersion: 2,
     learning: { stage: 1, subStage: 1 },
     currentSubStageSession: { perfectStreak: 0 },
     unlockedContent: [],
@@ -73,6 +76,11 @@ function loadState(): ProgressState {
     // Migrate from block-session model (puzzlesPlayed/perfectPuzzles → perfectStreak)
     if (!('perfectStreak' in (merged.currentSubStageSession ?? {}))) {
       merged.currentSubStageSession = { perfectStreak: 0 }
+    }
+    // storageVersion 1→2: Stage 0 (Interval Basics) prepended — shift existing stage by 1
+    if ((merged.storageVersion ?? 1) < 2) {
+      merged.learning = { stage: merged.learning.stage + 1, subStage: merged.learning.subStage }
+      merged.storageVersion = 2
     }
     return merged
   } catch {
@@ -179,6 +187,12 @@ export const useProgressStore = defineStore('progress', () => {
     const { stage, subStage } = state.value.learning
     return CURRICULUM.map((subStages, stageIndex) => {
       const stageNum = stageIndex + 1
+      if (stageNum === INTRO_STAGE) {
+        return {
+          accessible: true,
+          subStages: subStages.map((quality) => ({ accessible: true, quality })),
+        }
+      }
       const stageAccessible = stageNum < stage || (stageNum === stage && subStage >= 2)
       const subStagesList = subStages.map((quality, ssIndex) => ({
         accessible: stageAccessible && (stageNum < stage || ssIndex <= subStage - 1),
@@ -187,6 +201,12 @@ export const useProgressStore = defineStore('progress', () => {
       return { accessible: stageAccessible, subStages: subStagesList }
     })
   })
+
+  function skipToTriads(): void {
+    state.value.learning = { stage: INTRO_STAGE + 1, subStage: 1 }
+    state.value.currentSubStageSession = { perfectStreak: 0 }
+  }
+
 
   function setLastFreePlayStage(stage: number): void {
     state.value.lastFreePlayStage = stage
@@ -210,6 +230,7 @@ export const useProgressStore = defineStore('progress', () => {
     nextDiagonalNote,
     resetProgress,
     jumpToPosition,
+    skipToTriads,
     setLastFreePlayStage,
     setIdleMode,
   }
