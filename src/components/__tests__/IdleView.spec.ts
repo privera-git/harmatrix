@@ -156,14 +156,15 @@ describe('IdleView', () => {
       const progress = useProgressStore()
       progress.state.learning = { stage: 2, subStage: 1 }
       const wrapper = mountView()
-      expect(wrapper.find('.skip-btn').exists()).toBe(false)
+      const skipBtns = wrapper.findAll('.skip-btn')
+      expect(skipBtns.every((b) => !b.text().includes('Triads'))).toBe(true)
     })
 
     it('hides Skip button in free play mode', async () => {
       const progress = useProgressStore()
       progress.state.idleMode = 'freePlay'
       const wrapper = mountView()
-      expect(wrapper.find('.skip-btn').exists()).toBe(false)
+      expect(wrapper.findAll('.skip-btn')).toHaveLength(0)
     })
 
     it('clicking Skip calls skipToTriads', async () => {
@@ -174,11 +175,76 @@ describe('IdleView', () => {
       expect(spy).toHaveBeenCalledTimes(1)
     })
 
-    it('after skip, skip button disappears', async () => {
+    it('after skip, Skip to Triads button disappears', async () => {
       const wrapper = mountView()
       await wrapper.find('.skip-btn').trigger('click')
       await wrapper.vm.$nextTick()
-      expect(wrapper.find('.skip-btn').exists()).toBe(false)
+      const skipBtns = wrapper.findAll('.skip-btn')
+      expect(skipBtns.every((b) => !b.text().includes('Triads'))).toBe(true)
+    })
+  })
+
+  describe('back to intervals button', () => {
+    it('shows Back button in learn mode at Stage 2 (Triads)', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 }
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.skip-btn')
+      expect(btns.some((b) => b.text().includes('Interval Basics'))).toBe(true)
+    })
+
+    it('back button text contains "Interval Basics"', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 }
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.skip-btn')
+      const backBtn = btns.find((b) => b.text().includes('Interval Basics'))
+      expect(backBtn).toBeDefined()
+    })
+
+    it('hides Back button at Stage 1 (Interval Basics)', () => {
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.skip-btn')
+      expect(btns.every((b) => !b.text().includes('Interval Basics'))).toBe(true)
+    })
+
+    it('hides Back button at Stage 3+', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 3, subStage: 1 }
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.skip-btn')
+      expect(btns.every((b) => !b.text().includes('Interval Basics'))).toBe(true)
+    })
+
+    it('hides Back button in free play mode', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      progress.state.learning = { stage: 2, subStage: 1 }
+      const wrapper = mountView()
+      expect(wrapper.findAll('.skip-btn')).toHaveLength(0)
+    })
+
+    it('clicking Back calls jumpToPosition(1, 1)', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 }
+      const spy = vi.spyOn(progress, 'jumpToPosition')
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.skip-btn')
+      const backBtn = btns.find((b) => b.text().includes('Interval Basics'))!
+      await backBtn.trigger('click')
+      expect(spy).toHaveBeenCalledWith(1, 1)
+    })
+
+    it('after clicking Back, Back button disappears', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 }
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.skip-btn')
+      const backBtn = btns.find((b) => b.text().includes('Interval Basics'))!
+      await backBtn.trigger('click')
+      await wrapper.vm.$nextTick()
+      const remaining = wrapper.findAll('.skip-btn')
+      expect(remaining.every((b) => !b.text().includes('Interval Basics'))).toBe(true)
     })
   })
 
