@@ -50,6 +50,16 @@ describe('initial state', () => {
     const store = useProgressStore()
     expect(store.state.practiceStreak).toBe(0)
   })
+
+  it('starts with lastFreePlayStage null', () => {
+    const store = useProgressStore()
+    expect(store.state.lastFreePlayStage).toBeNull()
+  })
+
+  it('starts in learn idleMode', () => {
+    const store = useProgressStore()
+    expect(store.state.idleMode).toBe('learn')
+  })
 })
 
 describe('recordSessionResults', () => {
@@ -116,15 +126,14 @@ describe('advanceLearning', () => {
     expect(store.state.learning).toEqual({ stage: 1, subStage: 2 })
   })
 
-  it('advances to next stage after last sub-stage of a stage', () => {
+  it('advances to next stage after last sub-stage of Triads (6 sub-stages)', () => {
     const store = useProgressStore()
-    // Stage 1 has 6 sub-stages (major, minor, aug, dim, sus2, sus4)
     store.state.learning = { stage: 1, subStage: 6 }
     store.advanceLearning()
     expect(store.state.learning).toEqual({ stage: 2, subStage: 1 })
   })
 
-  it('unlocks all qualities of the completed stage', () => {
+  it('unlocks all Triads qualities when completing stage 1', () => {
     const store = useProgressStore()
     store.state.learning = { stage: 1, subStage: 6 }
     store.advanceLearning()
@@ -214,10 +223,10 @@ describe('jumpToPosition', () => {
     expect(store.state.learning).toEqual({ stage: 1, subStage: 3 })
   })
 
-  it('jumps to stage 2 sub-stage 5 when valid', () => {
+  it('jumps to stage 1 sub-stage 5 when valid (Triads has 6 sub-stages)', () => {
     const store = useProgressStore()
-    store.jumpToPosition(2, 5)
-    expect(store.state.learning).toEqual({ stage: 2, subStage: 5 })
+    store.jumpToPosition(1, 5)
+    expect(store.state.learning).toEqual({ stage: 1, subStage: 5 })
   })
 
   it('resets perfectStreak to 0 on jump', () => {
@@ -252,6 +261,65 @@ describe('jumpToPosition', () => {
   })
 })
 
+describe('freePlayAccess', () => {
+  it('locks everything when user is on sub-stage 1 of stage 1', () => {
+    const store = useProgressStore()
+    const access = store.freePlayAccess
+    expect(access.every((s) => !s.accessible)).toBe(true)
+    expect(access.every((s) => s.subStages.every((ss) => !ss.accessible))).toBe(true)
+  })
+
+  it('makes stage 1 (Triads) partially accessible when user is on subStage 2 of stage 1', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 1, subStage: 2 }
+    const access = store.freePlayAccess
+    expect(access[0]!.accessible).toBe(true)
+    expect(access[0]!.subStages[0]!.accessible).toBe(true)
+    expect(access[0]!.subStages[1]!.accessible).toBe(true)
+    expect(access[0]!.subStages[2]!.accessible).toBe(false)
+    expect(access.slice(1).every((s) => !s.accessible)).toBe(true)
+  })
+
+  it('makes stage 1 fully accessible and stage 2 locked when user starts stage 2', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 2, subStage: 1 }
+    const access = store.freePlayAccess
+    expect(access[0]!.accessible).toBe(true)
+    expect(access[0]!.subStages.every((ss) => ss.accessible)).toBe(true)
+    expect(access[1]!.accessible).toBe(false)
+  })
+
+  it('includes the quality for each sub-stage of Triads', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 1, subStage: 2 }
+    expect(store.freePlayAccess[0]!.subStages[0]!.quality).toBe('major')
+    expect(store.freePlayAccess[0]!.subStages[1]!.quality).toBe('minor')
+  })
+})
+
+describe('setLastFreePlayStage', () => {
+  it('updates lastFreePlayStage', () => {
+    const store = useProgressStore()
+    store.setLastFreePlayStage(2)
+    expect(store.state.lastFreePlayStage).toBe(2)
+  })
+})
+
+describe('setIdleMode', () => {
+  it('updates idleMode to freePlay', () => {
+    const store = useProgressStore()
+    store.setIdleMode('freePlay')
+    expect(store.state.idleMode).toBe('freePlay')
+  })
+
+  it('updates idleMode back to learn', () => {
+    const store = useProgressStore()
+    store.setIdleMode('freePlay')
+    store.setIdleMode('learn')
+    expect(store.state.idleMode).toBe('learn')
+  })
+})
+
 describe('persistence', () => {
   it('saves state to localStorage on mutation', () => {
     const store = useProgressStore()
@@ -270,4 +338,23 @@ describe('persistence', () => {
     const reloaded = useProgressStore()
     expect(reloaded.state.unlockedContent).toContain('minor')
   })
+
+  it('persists lastFreePlayStage', () => {
+    const store = useProgressStore()
+    store.setLastFreePlayStage(3)
+
+    setActivePinia(createPinia())
+    const reloaded = useProgressStore()
+    expect(reloaded.state.lastFreePlayStage).toBe(3)
+  })
+
+  it('persists idleMode', () => {
+    const store = useProgressStore()
+    store.setIdleMode('freePlay')
+
+    setActivePinia(createPinia())
+    const reloaded = useProgressStore()
+    expect(reloaded.state.idleMode).toBe('freePlay')
+  })
+
 })

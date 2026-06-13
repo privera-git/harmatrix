@@ -7,6 +7,8 @@ import type { AnswerResult, ScoringOptions } from '@/music/scoring'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
 
+type Quality = ChordQuality | ScaleMode
+
 type GameSession =
   | { phase: 'idle' }
   | {
@@ -14,6 +16,7 @@ type GameSession =
       puzzle: MatrixPuzzle
       answers: (string | null)[][]
       options: ScoringOptions
+      isFreePlay: boolean
     }
   | {
       phase: 'completed'
@@ -22,6 +25,7 @@ type GameSession =
       results: AnswerResult[][]
       score: number
       options: ScoringOptions
+      isFreePlay: boolean
     }
 
 export type { GameSession }
@@ -31,8 +35,9 @@ export const useGameStore = defineStore('game', () => {
 
   function startPuzzle(
     diagonalNote: string,
-    quality: ChordQuality | ScaleMode,
+    quality: Quality,
     options: ScoringOptions,
+    isFreePlay = false,
   ): boolean {
     const puzzle = generateMatrix(diagonalNote, quality)
     if (!puzzle) return false
@@ -41,7 +46,7 @@ export const useGameStore = defineStore('game', () => {
       Array.from({ length: puzzle.size }, (): string | null => null),
     )
 
-    session.value = { phase: 'playing', puzzle, answers, options }
+    session.value = { phase: 'playing', puzzle, answers, options, isFreePlay }
     return true
   }
 
@@ -86,6 +91,7 @@ export const useGameStore = defineStore('game', () => {
       results,
       score: scoreSession(nonGivenResults, options),
       options,
+      isFreePlay: session.value.isFreePlay,
     }
     return true
   }

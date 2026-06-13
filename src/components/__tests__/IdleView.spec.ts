@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, assert } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, assert, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import IdleView from '@/components/IdleView.vue'
@@ -6,13 +6,36 @@ import { useProgressStore } from '@/stores/progress'
 import { useGameStore } from '@/stores/game'
 import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
 
+function freshStorage() {
+  const store: Record<string, string> = {}
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, val: string) => {
+      store[key] = val
+    },
+    removeItem: (key: string) => {
+      delete store[key]
+    },
+    clear: () => {
+      Object.keys(store).forEach((k) => {
+        delete store[k]
+      })
+    },
+  }
+}
+
 function mountView() {
   return mount(IdleView)
 }
 
 describe('IdleView', () => {
   beforeEach(() => {
+    vi.stubGlobal('localStorage', freshStorage())
     setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   describe('static content', () => {
@@ -45,7 +68,7 @@ describe('IdleView', () => {
 
     it('shows quality matching current learning position', () => {
       const wrapper = mountView()
-      // Default position is stage 1, subStage 1 → 'major'
+      // Default position is stage 1, subStage 1 → 'major' (Triads SS-1)
       expect(wrapper.text()).toContain('major')
     })
 
@@ -53,7 +76,7 @@ describe('IdleView', () => {
       const progress = useProgressStore()
       progress.state.learning = { stage: 1, subStage: 2 }
       const wrapper = mountView()
-      // stage 1, subStage 2 → 'minor'
+      // stage 1, subStage 2 → 'minor' (Triads SS-2)
       expect(wrapper.text()).toContain('minor')
     })
 
@@ -115,6 +138,92 @@ describe('IdleView', () => {
       assert(game.session.phase === 'playing')
       expect(game.session.options.noDegreeLabels).toBe(false)
       expect(game.session.options.noPianoKeyboard).toBe(false)
+    })
+  })
+
+  describe('mode toggle', () => {
+    it('renders Learn and Free Play buttons', () => {
+      const wrapper = mountView()
+      const btns = wrapper.findAll('.mode-btn')
+      expect(btns[0]!.text()).toBe('Learn')
+      expect(btns[1]!.text()).toBe('Free Play')
+    })
+
+    it('defaults to learn mode', () => {
+      const wrapper = mountView()
+      expect(wrapper.findAll('.mode-btn')[0]!.classes()).toContain('mode-btn--active')
+    })
+
+    it('switches to free play mode on click and persists', async () => {
+      const progress = useProgressStore()
+      const spy = vi.spyOn(progress, 'setIdleMode')
+      const wrapper = mountView()
+      await wrapper.findAll('.mode-btn')[1]!.trigger('click')
+      expect(spy).toHaveBeenCalledWith('freePlay')
+    })
+
+    it('reflects persisted idleMode on mount', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      const wrapper = mountView()
+      expect(wrapper.findAll('.mode-btn')[1]!.classes()).toContain('mode-btn--active')
+    })
+  })
+
+  describe('free play mode rendering', () => {
+    it('hides the quality label in free play mode', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      const wrapper = mountView()
+      expect(wrapper.find('.quality-label').exists()).toBe(false)
+    })
+
+    it('hides the Start button in free play mode', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      const wrapper = mountView()
+      expect(wrapper.find('.start-btn').exists()).toBe(false)
+    })
+
+    it('shows FreePlayPicker in free play mode', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      progress.state.learning = { stage: 1, subStage: 2 }
+      const wrapper = mountView()
+      expect(wrapper.findComponent({ name: 'FreePlayPicker' }).exists()).toBe(true)
+    })
+
+    it('keeps difficulty checkboxes visible in free play mode', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      const wrapper = mountView()
+      expect(wrapper.findAll('input[type="checkbox"]')).toHaveLength(2)
+    })
+  })
+
+  describe('free play quality selection', () => {
+    it('starts a free play session when FreePlayPicker emits play', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      progress.state.learning = { stage: 1, subStage: 2 }
+      const game = useGameStore()
+      const wrapper = mountView()
+      const picker = wrapper.findComponent({ name: 'FreePlayPicker' })
+      await picker.vm.$emit('play', 'major')
+      assert(game.session.phase === 'playing')
+      expect(game.session.isFreePlay).toBe(true)
+      expect(game.session.puzzle.quality).toBe('major')
+    })
+
+    it('persists last free play stage when FreePlayPicker emits stageOpen', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      progress.state.learning = { stage: 1, subStage: 2 }
+      const spy = vi.spyOn(progress, 'setLastFreePlayStage')
+      const wrapper = mountView()
+      const picker = wrapper.findComponent({ name: 'FreePlayPicker' })
+      await picker.vm.$emit('stageOpen', 0)
+      expect(spy).toHaveBeenCalledWith(0)
     })
   })
 })

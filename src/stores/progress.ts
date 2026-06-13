@@ -1,10 +1,12 @@
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { CURRICULUM, SUB_STAGE_SESSION_SIZE } from '@/config/game'
 import { randomDiagonalNote } from '@/music/note'
 import type { AnswerResult } from '@/music/scoring'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
+
+type Quality = ChordQuality | ScaleMode
 
 interface LearningPosition {
   stage: number
@@ -25,14 +27,26 @@ interface QualityStats {
 interface ProgressState {
   learning: LearningPosition
   currentSubStageSession: SubStageSession
-  unlockedContent: Array<ChordQuality | ScaleMode>
-  stats: Partial<Record<ChordQuality | ScaleMode, QualityStats>>
+  unlockedContent: Array<Quality>
+  stats: Partial<Record<Quality, QualityStats>>
   practiceStreak: number
   lastPracticeDate: string
   diagonalNoteHistory: string[]
+  lastFreePlayStage: number | null
+  idleMode: 'learn' | 'freePlay'
 }
 
-export type { ProgressState, QualityStats }
+interface FreePlaySubStageAccess {
+  accessible: boolean
+  quality: Quality
+}
+
+interface FreePlayStageAccess {
+  accessible: boolean
+  subStages: FreePlaySubStageAccess[]
+}
+
+export type { ProgressState, QualityStats, FreePlayStageAccess, FreePlaySubStageAccess }
 
 const STORAGE_KEY = 'harmatrix:progress'
 
@@ -45,6 +59,8 @@ function makeDefaultState(): ProgressState {
     practiceStreak: 0,
     lastPracticeDate: '',
     diagonalNoteHistory: [],
+    lastFreePlayStage: null,
+    idleMode: 'learn',
   }
 }
 
@@ -52,12 +68,13 @@ function loadState(): ProgressState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return makeDefaultState()
-    const parsed = JSON.parse(raw) as ProgressState
+    const persisted = JSON.parse(raw) as Partial<ProgressState>
+    const merged: ProgressState = { ...makeDefaultState(), ...persisted }
     // Migrate from block-session model (puzzlesPlayed/perfectPuzzles → perfectStreak)
-    if (!('perfectStreak' in (parsed.currentSubStageSession ?? {}))) {
-      parsed.currentSubStageSession = { perfectStreak: 0 }
+    if (!('perfectStreak' in (merged.currentSubStageSession ?? {}))) {
+      merged.currentSubStageSession = { perfectStreak: 0 }
     }
-    return parsed
+    return merged
   } catch {
     return makeDefaultState()
   }
@@ -84,7 +101,7 @@ export const useProgressStore = defineStore('progress', () => {
   )
 
   function recordSessionResults(
-    quality: ChordQuality | ScaleMode,
+    quality: Quality,
     results: AnswerResult[],
   ): void {
     const existing = state.value.stats[quality] ?? { correct: 0, enharmonic: 0, wrong: 0, total: 0 }
@@ -122,7 +139,7 @@ export const useProgressStore = defineStore('progress', () => {
     }
   }
 
-  function unlockContent(quality: ChordQuality | ScaleMode): void {
+  function unlockContent(quality: Quality): void {
     if (!state.value.unlockedContent.includes(quality)) {
       state.value.unlockedContent.push(quality)
     }
@@ -158,9 +175,42 @@ export const useProgressStore = defineStore('progress', () => {
     state.value.currentSubStageSession = { perfectStreak: 0 }
   }
 
+  const freePlayAccess = computed<FreePlayStageAccess[]>(() => {
+    const { stage, subStage } = state.value.learning
+    return CURRICULUM.map((subStages, stageIndex) => {
+      const stageNum = stageIndex + 1
+      const stageAccessible = stageNum < stage || (stageNum === stage && subStage >= 2)
+      const subStagesList = subStages.map((quality, ssIndex) => ({
+        accessible: stageAccessible && (stageNum < stage || ssIndex <= subStage - 1),
+        quality,
+      }))
+      return { accessible: stageAccessible, subStages: subStagesList }
+    })
+  })
+
+  function setLastFreePlayStage(stage: number): void {
+    state.value.lastFreePlayStage = stage
+  }
+
+  function setIdleMode(mode: 'learn' | 'freePlay'): void {
+    state.value.idleMode = mode
+  }
+
   function resetProgress(): void {
     state.value = makeDefaultState()
   }
 
-  return { state, recordSessionResults, advanceLearning, unlockContent, updateStreak, nextDiagonalNote, resetProgress, jumpToPosition }
+  return {
+    state,
+    freePlayAccess,
+    recordSessionResults,
+    advanceLearning,
+    unlockContent,
+    updateStreak,
+    nextDiagonalNote,
+    resetProgress,
+    jumpToPosition,
+    setLastFreePlayStage,
+    setIdleMode,
+  }
 })
