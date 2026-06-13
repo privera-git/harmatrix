@@ -9,7 +9,10 @@ import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import NotePicker from '@/components/NotePicker.vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
+import { useAudio } from '@/composables/useAudio'
 import type { MatrixCell } from '@/music/matrix'
+
+const { playJingle } = useAudio()
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
@@ -79,6 +82,17 @@ function abandon() {
   gameStore.resetSession()
 }
 
+function resultJingle(): 'perfect' | 'enharmonic' | 'wrong' | null {
+  const s = session.value
+  if (s.phase !== 'completed') return null
+  const nonGiven = s.results.flatMap((row, r) =>
+    row.filter((_, c) => !s.puzzle.cells[r]?.[c]?.isGiven),
+  )
+  if (nonGiven.some((r) => r === 'wrong')) return 'wrong'
+  if (nonGiven.some((r) => r === 'enharmonic')) return 'enharmonic'
+  return 'perfect'
+}
+
 function submit() {
   if (session.value.phase !== 'playing') return
   const { puzzle, answers } = session.value
@@ -87,6 +101,8 @@ function submit() {
   )
   if (hasEmpty && !window.confirm('Some cells are still empty. Submit anyway?')) return
   gameStore.completeSession()
+  const jingle = resultJingle()
+  if (jingle) playJingle(jingle)
 }
 </script>
 
