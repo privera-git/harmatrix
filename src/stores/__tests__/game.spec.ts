@@ -149,6 +149,38 @@ describe('completeSession', () => {
   })
 })
 
+describe('isFreePlay flag', () => {
+  it('defaults isFreePlay to false', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.isFreePlay).toBe(false)
+  })
+
+  it('stores isFreePlay: true when passed', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, true)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.isFreePlay).toBe(true)
+  })
+
+  it('preserves isFreePlay through completeSession', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, true)
+    store.completeSession()
+    if (store.session.phase !== 'completed') return
+    expect(store.session.isFreePlay).toBe(true)
+  })
+
+  it('preserves isFreePlay: false through completeSession', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false)
+    store.completeSession()
+    if (store.session.phase !== 'completed') return
+    expect(store.session.isFreePlay).toBe(false)
+  })
+})
+
 describe('resetSession', () => {
   it('transitions completed → idle', () => {
     const store = useGameStore()
@@ -178,3 +210,4 @@ describe('full lifecycle: idle → playing → completed → idle', () => {
     expect(store.session.phase).toBe('idle')
   })
 })
+

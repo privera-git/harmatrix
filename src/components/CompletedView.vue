@@ -15,6 +15,9 @@ const { session } = storeToRefs(gameStore)
 const { state: progressState } = storeToRefs(progressStore)
 
 const perfectStreak = computed(() => progressState.value.currentSubStageSession.perfectStreak)
+const isFreePlay = computed(
+  () => session.value.phase === 'completed' && session.value.isFreePlay,
+)
 
 const displayCells = computed<MatrixCell[][]>(() => {
   if (session.value.phase !== 'completed') return []
@@ -59,7 +62,8 @@ const multiplier = computed(() => {
 
 onMounted(() => {
   if (session.value.phase !== 'completed') return
-  const { puzzle, results } = session.value
+  const { puzzle, results, isFreePlay } = session.value
+  if (isFreePlay) return
   const flatResults = puzzle.cells.flatMap((row, r) =>
     row.flatMap((cell, c) => (cell.isGiven ? [] : [results[r]?.[c] ?? 'wrong'])),
   )
@@ -69,8 +73,8 @@ onMounted(() => {
 
 function playAgain() {
   if (session.value.phase !== 'completed') return
-  const { puzzle, options } = session.value
-  gameStore.startPuzzle(progressStore.nextDiagonalNote(), puzzle.quality, options)
+  const { puzzle, options, isFreePlay } = session.value
+  gameStore.startPuzzle(progressStore.nextDiagonalNote(), puzzle.quality, options, isFreePlay)
 }
 
 function backToMenu() {
@@ -88,7 +92,7 @@ function backToMenu() {
       <div class="score-section">
         <div class="score-total">
           <span>Score: {{ session.score }}</span>
-          <span class="score-streak">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
+          <span v-if="!isFreePlay" class="score-streak">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
         </div>
         <div class="score-breakdown">
           <span class="breakdown-correct">✓ {{ breakdown.correct }}</span>

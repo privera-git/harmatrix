@@ -7,9 +7,9 @@ import { useProgressStore } from '@/stores/progress'
 
 const DEFAULT_OPTIONS = { noDegreeLabels: false, noPianoKeyboard: false }
 
-function completeGame(opts = DEFAULT_OPTIONS) {
+function completeGame(opts = DEFAULT_OPTIONS, isFreePlay = false) {
   const game = useGameStore()
-  game.startPuzzle('C', 'major', opts)
+  game.startPuzzle('C', 'major', opts, isFreePlay)
   game.completeSession()
   return game
 }
@@ -110,6 +110,50 @@ describe('CompletedView', () => {
       const wrapper = mountView()
       await wrapper.vm.$nextTick()
       expect(spy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('free play mode', () => {
+    it('does not call recordSessionResults when isFreePlay is true', () => {
+      const progress = useProgressStore()
+      const spy = vi.spyOn(progress, 'recordSessionResults')
+      completeGame(DEFAULT_OPTIONS, true)
+      mountView()
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    it('does not call updateStreak when isFreePlay is true', () => {
+      const progress = useProgressStore()
+      const spy = vi.spyOn(progress, 'updateStreak')
+      completeGame(DEFAULT_OPTIONS, true)
+      mountView()
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    it('still shows the score in free play mode', () => {
+      completeGame(DEFAULT_OPTIONS, true)
+      const wrapper = mountView()
+      expect(wrapper.find('.score-total').text()).toContain('Score:')
+    })
+
+    it('hides the streak indicator in free play mode', () => {
+      completeGame(DEFAULT_OPTIONS, true)
+      const wrapper = mountView()
+      expect(wrapper.find('.score-streak').exists()).toBe(false)
+    })
+
+    it('shows the streak indicator in learn mode', () => {
+      completeGame(DEFAULT_OPTIONS, false)
+      const wrapper = mountView()
+      expect(wrapper.find('.score-streak').exists()).toBe(true)
+    })
+
+    it('Play Again forwards isFreePlay: true', async () => {
+      const game = completeGame(DEFAULT_OPTIONS, true)
+      const wrapper = mountView()
+      await wrapper.find('button:first-child').trigger('click')
+      if (game.session.phase !== 'playing') return
+      expect(game.session.isFreePlay).toBe(true)
     })
   })
 

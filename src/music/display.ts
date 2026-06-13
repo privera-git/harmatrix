@@ -7,8 +7,6 @@ const TRIAD_LABEL: Partial<Record<ChordQuality, string>> = {
   minor: 'minor triad',
   aug: 'augmented triad',
   dim: 'diminished triad',
-  sus2: 'sus2',
-  sus4: 'sus4',
 }
 
 const SCALE_LABEL: Record<ScaleMode, string> = {
@@ -33,20 +31,27 @@ const SCALE_LABEL: Record<ScaleMode, string> = {
   mixolydianFlat6: 'mixolydian ♭6 scale',
   aeolianFlat5: 'aeolian ♭5 scale',
   altered: 'altered scale',
-  majorPenta: 'major pentatonic scale',
   minorPenta: 'pentatonic minor scale',
+  majorPenta: 'major pentatonic scale',
   wholeTone: 'whole tone scale',
   wholeHalfDim: 'whole-half diminished scale',
   halfWholeDim: 'half-whole diminished scale',
+}
+
+export function formatQualityLabel(quality: ChordQuality | ScaleMode): string {
+  if (quality in CHORD_CATALOG) {
+    const def = CHORD_CATALOG[quality as ChordQuality]
+    return TRIAD_LABEL[quality as ChordQuality] ?? def.symbol
+  }
+  return SCALE_LABEL[quality as ScaleMode] ?? quality
 }
 
 export function formatPuzzleTitle(note: string, quality: ChordQuality | ScaleMode): string {
   if (quality in CHORD_CATALOG) {
     const def = CHORD_CATALOG[quality as ChordQuality]
     if (def.intervals.length === 3) {
-      return `${note} ${TRIAD_LABEL[quality as ChordQuality] ?? quality}`
+      return `${note} ${TRIAD_LABEL[quality as ChordQuality] ?? def.symbol}`
     }
-    // Wrap alteration suffixes like b9, #9, #11 in parens: "7b9" → "7(b9)"
     const symbol = def.symbol.replace(/([b#]\d+)/g, '($1)')
     return `${note}${symbol}`
   }
