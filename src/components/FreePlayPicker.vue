@@ -167,6 +167,10 @@ function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, acces
     border-color: #444;
   }
 
+  .stage-header {
+    color: #ccc;
+  }
+
   .stage-header--open {
     background: #2a2a2a;
   }
@@ -176,6 +180,7 @@ function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, acces
   }
 
   .sub-stage-btn {
+    color: #ccc;
     border-bottom-color: #333;
   }
 
