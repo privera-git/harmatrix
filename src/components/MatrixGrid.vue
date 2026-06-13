@@ -2,6 +2,9 @@
 import { computed } from 'vue'
 import type { MatrixCell } from '@/music/matrix'
 import type { AnswerResult } from '@/music/scoring'
+import { useAudio } from '@/composables/useAudio'
+
+const { playNote } = useAudio()
 
 const props = defineProps<{
   cells: MatrixCell[][]
@@ -51,8 +54,13 @@ function isActive(cell: MatrixCell): boolean {
 }
 
 function handleClick(cell: MatrixCell) {
-  if (props.mode !== 'input' || cell.isGiven) return
+  if (props.mode !== 'input') return
+  if (cell.isGiven) {
+    if (cell.note) playNote(cell.note)
+    return
+  }
   emit('cell-click', cell.row, cell.col)
+  if (cell.note) playNote(cell.note)
 }
 
 function ghostNoteFor(cell: MatrixCell): string | undefined {
