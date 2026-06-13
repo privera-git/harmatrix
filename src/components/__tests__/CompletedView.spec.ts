@@ -86,6 +86,24 @@ describe('CompletedView', () => {
   })
 
   describe('onMounted side effects', () => {
+    it('calls incrementSessionsPlayed on mount for learn mode', () => {
+      const progress = useProgressStore()
+      const spy = vi.spyOn(progress, 'incrementSessionsPlayed')
+      completeGame()
+      mountView()
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith('major')
+    })
+
+    it('calls incrementSessionsPlayed on mount even for free play', () => {
+      const progress = useProgressStore()
+      const spy = vi.spyOn(progress, 'incrementSessionsPlayed')
+      completeGame(DEFAULT_OPTIONS, true)
+      mountView()
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith('major')
+    })
+
     it('calls recordSessionResults once on mount', () => {
       const progress = useProgressStore()
       const spy = vi.spyOn(progress, 'recordSessionResults')

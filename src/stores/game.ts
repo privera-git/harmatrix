@@ -10,6 +10,8 @@ import type { IntervalGroup } from '@/music/data/intervals'
 
 type Quality = ChordQuality | ScaleMode | IntervalGroup
 
+type GuidanceLevel = 'full' | 'hint' | 'none'
+
 type GameSession =
   | { phase: 'idle' }
   | {
@@ -18,6 +20,8 @@ type GameSession =
       answers: (string | null)[][]
       options: ScoringOptions
       isFreePlay: boolean
+      guidanceLevel: GuidanceLevel
+      revealedHints: string[]
     }
   | {
       phase: 'completed'
@@ -29,6 +33,8 @@ type GameSession =
       isFreePlay: boolean
     }
 
+export type { GuidanceLevel }
+
 export type { GameSession }
 
 export const useGameStore = defineStore('game', () => {
@@ -39,6 +45,7 @@ export const useGameStore = defineStore('game', () => {
     quality: Quality,
     options: ScoringOptions,
     isFreePlay = false,
+    guidanceLevel: GuidanceLevel = 'none',
   ): boolean {
     const puzzle = generateMatrix(diagonalNote, quality)
     if (!puzzle) return false
@@ -47,7 +54,7 @@ export const useGameStore = defineStore('game', () => {
       Array.from({ length: puzzle.size }, (): string | null => null),
     )
 
-    session.value = { phase: 'playing', puzzle, answers, options, isFreePlay }
+    session.value = { phase: 'playing', puzzle, answers, options, isFreePlay, guidanceLevel, revealedHints: [] }
     return true
   }
 
@@ -97,9 +104,18 @@ export const useGameStore = defineStore('game', () => {
     return true
   }
 
+  function revealHint(row: number, col: number): void {
+    if (session.value.phase !== 'playing') return
+    if (session.value.guidanceLevel !== 'hint') return
+    const key = `${row},${col}`
+    if (!session.value.revealedHints.includes(key)) {
+      session.value.revealedHints.push(key)
+    }
+  }
+
   function resetSession(): void {
     session.value = { phase: 'idle' }
   }
 
-  return { session, startPuzzle, submitAnswer, completeSession, resetSession }
+  return { session, startPuzzle, submitAnswer, completeSession, revealHint, resetSession }
 })
