@@ -17,6 +17,16 @@ const { session } = storeToRefs(gameStore)
 const { state: progressState } = storeToRefs(progressStore)
 
 const perfectStreak = computed(() => progressState.value.currentSubStageSession.perfectStreak)
+const guidanceLevel = computed(() =>
+  session.value.phase === 'playing' ? session.value.guidanceLevel : 'none',
+)
+const revealedHints = computed(() =>
+  session.value.phase === 'playing' ? session.value.revealedHints : [],
+)
+const guidedAnswers = computed<string[][]>(() => {
+  if (session.value.phase !== 'playing') return []
+  return session.value.puzzle.cells.map((row) => row.map((cell) => cell.note))
+})
 
 const activeCell = ref<{ row: number; col: number } | null>(null)
 
@@ -94,7 +104,11 @@ function submit() {
         :active-cell="activeCell ?? undefined"
         :show-degree-labels="showDegreeLabels"
         :degrees="session.puzzle.degrees"
+        :guidance-level="guidanceLevel"
+        :revealed-hints="revealedHints"
+        :guided-answers="guidedAnswers"
         @cell-click="onCellClick"
+        @reveal-hint="gameStore.revealHint"
       />
 
       <div class="progress-indicator">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</div>

@@ -33,11 +33,13 @@ function setMode(mode: 'learn' | 'freePlay'): void {
 }
 
 function start() {
+  const opts = { noDegreeLabels: noDegreeLabels.value, noPianoKeyboard: noPianoKeyboard.value }
   gameStore.startPuzzle(
     progressStore.nextDiagonalNote(),
     quality.value,
-    { noDegreeLabels: noDegreeLabels.value, noPianoKeyboard: noPianoKeyboard.value },
+    opts,
     false,
+    progressStore.guidanceLevelFor(quality.value),
   )
 }
 
@@ -46,11 +48,13 @@ function skipToTriads(): void {
 }
 
 function onFreePlaySelect(selectedQuality: ChordQuality | ScaleMode | IntervalGroup): void {
+  const opts = { noDegreeLabels: noDegreeLabels.value, noPianoKeyboard: noPianoKeyboard.value }
   gameStore.startPuzzle(
     progressStore.nextDiagonalNote(),
     selectedQuality,
-    { noDegreeLabels: noDegreeLabels.value, noPianoKeyboard: noPianoKeyboard.value },
+    opts,
     true,
+    progressStore.guidanceLevelFor(selectedQuality),
   )
 }
 

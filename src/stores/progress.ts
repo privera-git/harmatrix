@@ -31,6 +31,7 @@ interface ProgressState {
   currentSubStageSession: SubStageSession
   unlockedContent: Array<Quality>
   stats: Partial<Record<Quality, QualityStats>>
+  sessionsPlayed: Partial<Record<Quality, number>>
   practiceStreak: number
   lastPracticeDate: string
   diagonalNoteHistory: string[]
@@ -59,6 +60,7 @@ function makeDefaultState(): ProgressState {
     currentSubStageSession: { perfectStreak: 0 },
     unlockedContent: [],
     stats: {},
+    sessionsPlayed: {},
     practiceStreak: 0,
     lastPracticeDate: '',
     diagonalNoteHistory: [],
@@ -202,6 +204,17 @@ export const useProgressStore = defineStore('progress', () => {
     })
   })
 
+  function incrementSessionsPlayed(quality: Quality): void {
+    state.value.sessionsPlayed[quality] = (state.value.sessionsPlayed[quality] ?? 0) + 1
+  }
+
+  function guidanceLevelFor(quality: Quality): 'full' | 'hint' | 'none' {
+    const n = state.value.sessionsPlayed[quality] ?? 0
+    if (n < 3) return 'full'
+    if (n < 6) return 'hint'
+    return 'none'
+  }
+
   function skipToTriads(): void {
     state.value.learning = { stage: INTRO_STAGE + 1, subStage: 1 }
     state.value.currentSubStageSession = { perfectStreak: 0 }
@@ -223,6 +236,8 @@ export const useProgressStore = defineStore('progress', () => {
     state,
     freePlayAccess,
     recordSessionResults,
+    incrementSessionsPlayed,
+    guidanceLevelFor,
     advanceLearning,
     unlockContent,
     updateStreak,

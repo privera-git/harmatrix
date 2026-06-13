@@ -211,3 +211,84 @@ describe('full lifecycle: idle → playing → completed → idle', () => {
   })
 })
 
+describe('guidanceLevel', () => {
+  it('defaults guidanceLevel to none', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.guidanceLevel).toBe('none')
+  })
+
+  it('stores guidanceLevel: full when passed', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'full')
+    if (store.session.phase !== 'playing') return
+    expect(store.session.guidanceLevel).toBe('full')
+  })
+
+  it('stores guidanceLevel: hint when passed', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'hint')
+    if (store.session.phase !== 'playing') return
+    expect(store.session.guidanceLevel).toBe('hint')
+  })
+
+  it('initializes revealedHints as empty array', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'hint')
+    if (store.session.phase !== 'playing') return
+    expect(store.session.revealedHints).toEqual([])
+  })
+})
+
+describe('revealHint', () => {
+  it('adds a "row,col" key when guidanceLevel is hint', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'hint')
+    store.revealHint(1, 0)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.revealedHints).toContain('1,0')
+  })
+
+  it('does not add duplicate keys', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'hint')
+    store.revealHint(1, 0)
+    store.revealHint(1, 0)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.revealedHints).toHaveLength(1)
+  })
+
+  it('can reveal multiple distinct hints', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'hint')
+    store.revealHint(1, 0)
+    store.revealHint(2, 0)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.revealedHints).toContain('1,0')
+    expect(store.session.revealedHints).toContain('2,0')
+    expect(store.session.revealedHints).toHaveLength(2)
+  })
+
+  it('is a no-op when guidanceLevel is full', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'full')
+    store.revealHint(1, 0)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.revealedHints).toHaveLength(0)
+  })
+
+  it('is a no-op when guidanceLevel is none', () => {
+    const store = useGameStore()
+    store.startPuzzle('C', 'major', DEFAULT_OPTIONS, false, 'none')
+    store.revealHint(1, 0)
+    if (store.session.phase !== 'playing') return
+    expect(store.session.revealedHints).toHaveLength(0)
+  })
+
+  it('is a no-op when not in playing phase', () => {
+    const store = useGameStore()
+    expect(() => store.revealHint(1, 0)).not.toThrow()
+  })
+})
+

@@ -60,6 +60,11 @@ describe('initial state', () => {
     const store = useProgressStore()
     expect(store.state.idleMode).toBe('learn')
   })
+
+  it('starts with empty sessionsPlayed', () => {
+    const store = useProgressStore()
+    expect(store.state.sessionsPlayed).toEqual({})
+  })
 })
 
 describe('recordSessionResults', () => {
@@ -116,6 +121,71 @@ describe('recordSessionResults', () => {
     }
     expect(store.state.learning.subStage).toBe(2)
     expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
+  })
+})
+
+describe('incrementSessionsPlayed', () => {
+  it('increments sessionsPlayed for a quality', () => {
+    const store = useProgressStore()
+    store.incrementSessionsPlayed('major')
+    expect(store.state.sessionsPlayed['major']).toBe(1)
+  })
+
+  it('accumulates across multiple calls', () => {
+    const store = useProgressStore()
+    store.incrementSessionsPlayed('major')
+    store.incrementSessionsPlayed('major')
+    store.incrementSessionsPlayed('major')
+    expect(store.state.sessionsPlayed['major']).toBe(3)
+  })
+
+  it('tracks different qualities independently', () => {
+    const store = useProgressStore()
+    store.incrementSessionsPlayed('major')
+    store.incrementSessionsPlayed('seconds')
+    expect(store.state.sessionsPlayed['major']).toBe(1)
+    expect(store.state.sessionsPlayed['seconds']).toBe(1)
+  })
+})
+
+describe('guidanceLevelFor', () => {
+  it('returns full for an unplayed quality', () => {
+    const store = useProgressStore()
+    expect(store.guidanceLevelFor('major')).toBe('full')
+  })
+
+  it('returns full for sessions 0, 1, 2', () => {
+    const store = useProgressStore()
+    for (let i = 0; i < 3; i++) {
+      expect(store.guidanceLevelFor('major')).toBe('full')
+      store.incrementSessionsPlayed('major')
+    }
+  })
+
+  it('returns hint for sessions 3, 4, 5', () => {
+    const store = useProgressStore()
+    for (let i = 0; i < 3; i++) store.incrementSessionsPlayed('major')
+    for (let i = 0; i < 3; i++) {
+      expect(store.guidanceLevelFor('major')).toBe('hint')
+      store.incrementSessionsPlayed('major')
+    }
+  })
+
+  it('returns none for session 6 and beyond', () => {
+    const store = useProgressStore()
+    for (let i = 0; i < 6; i++) store.incrementSessionsPlayed('major')
+    expect(store.guidanceLevelFor('major')).toBe('none')
+    store.incrementSessionsPlayed('major')
+    expect(store.guidanceLevelFor('major')).toBe('none')
+  })
+
+  it('works for IntervalGroup qualities', () => {
+    const store = useProgressStore()
+    expect(store.guidanceLevelFor('seconds')).toBe('full')
+    store.incrementSessionsPlayed('seconds')
+    store.incrementSessionsPlayed('seconds')
+    store.incrementSessionsPlayed('seconds')
+    expect(store.guidanceLevelFor('seconds')).toBe('hint')
   })
 })
 
@@ -418,6 +488,16 @@ describe('persistence', () => {
     setActivePinia(createPinia())
     const reloaded = useProgressStore()
     expect(reloaded.state.idleMode).toBe('freePlay')
+  })
+
+  it('persists sessionsPlayed', () => {
+    const store = useProgressStore()
+    store.incrementSessionsPlayed('major')
+    store.incrementSessionsPlayed('major')
+
+    setActivePinia(createPinia())
+    const reloaded = useProgressStore()
+    expect(reloaded.state.sessionsPlayed['major']).toBe(2)
   })
 
   it('migrates storageVersion 1 data by incrementing stage by 1', () => {

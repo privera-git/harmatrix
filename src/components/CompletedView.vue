@@ -63,6 +63,7 @@ const multiplier = computed(() => {
 onMounted(() => {
   if (session.value.phase !== 'completed') return
   const { puzzle, results, isFreePlay } = session.value
+  progressStore.incrementSessionsPlayed(puzzle.quality)
   if (isFreePlay) return
   const flatResults = puzzle.cells.flatMap((row, r) =>
     row.flatMap((cell, c) => (cell.isGiven ? [] : [results[r]?.[c] ?? 'wrong'])),

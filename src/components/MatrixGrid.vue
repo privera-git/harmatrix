@@ -11,10 +11,14 @@ const props = defineProps<{
   activeCell?: { row: number; col: number }
   showDegreeLabels: boolean
   degrees?: string[]
+  guidanceLevel?: 'full' | 'hint' | 'none'
+  revealedHints?: string[]
+  guidedAnswers?: string[][]
 }>()
 
 const emit = defineEmits<{
   'cell-click': [row: number, col: number]
+  'reveal-hint': [row: number, col: number]
 }>()
 
 // Row 0 at bottom, row N-1 at top — diagonal ascends bottom-left to top-right
@@ -50,6 +54,22 @@ function handleClick(cell: MatrixCell) {
   if (props.mode !== 'input' || cell.isGiven) return
   emit('cell-click', cell.row, cell.col)
 }
+
+function ghostNoteFor(cell: MatrixCell): string | undefined {
+  if (props.mode !== 'input' || cell.isGiven || cell.note !== '') return undefined
+  if (props.guidanceLevel === 'full') return props.guidedAnswers?.[cell.row]?.[cell.col]
+  if (props.guidanceLevel === 'hint') {
+    const key = `${cell.row},${cell.col}`
+    if (props.revealedHints?.includes(key)) return props.guidedAnswers?.[cell.row]?.[cell.col]
+  }
+  return undefined
+}
+
+function showHintButton(cell: MatrixCell): boolean {
+  if (props.mode !== 'input' || cell.isGiven || props.guidanceLevel !== 'hint') return false
+  const key = `${cell.row},${cell.col}`
+  return !(props.revealedHints?.includes(key) ?? false)
+}
 </script>
 
 <template>
@@ -74,7 +94,16 @@ function handleClick(cell: MatrixCell) {
         :tabindex="tooltipFor(cell) ? 0 : undefined"
         @click="handleClick(cell)"
       >
-        <span class="cell-note">{{ cell.note }}</span>
+        <span class="cell-note">{{ cell.note || (ghostNoteFor(cell) ?? '') }}</span>
+        <span
+          v-if="!cell.note && ghostNoteFor(cell)"
+          class="cell-ghost-indicator"
+        />
+        <button
+          v-if="showHintButton(cell)"
+          class="hint-btn"
+          @click.stop="emit('reveal-hint', cell.row, cell.col)"
+        >?</button>
         <span v-if="mode === 'results' && !cell.isGiven && resultFor(cell)" class="cell-result">{{
           RESULT_SYMBOL[resultFor(cell) ?? 'wrong']
         }}</span>
@@ -149,6 +178,34 @@ function handleClick(cell: MatrixCell) {
 
 .cell-result {
   font-size: 0.7rem;
+}
+
+.cell-ghost-indicator {
+  display: none;
+}
+
+.matrix-cell:has(.cell-ghost-indicator) .cell-note {
+  opacity: 0.35;
+  font-style: italic;
+}
+
+.hint-btn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 102, 204, 0.08);
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #0066cc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hint-btn:hover {
+  background: rgba(0, 102, 204, 0.18);
 }
 
 .result-correct {
