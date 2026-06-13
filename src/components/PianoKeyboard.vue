@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { parseNote } from '@/music/note'
+import { useAudio } from '@/composables/useAudio'
+
+const { playNote } = useAudio()
 
 const props = defineProps<{
   activeNote?: string | null
@@ -33,6 +36,7 @@ const BLACK_KEYS = [
         :key="note"
         class="key white-key"
         :class="{ active: parseNote(note)?.chroma === activeChroma }"
+        @click="playNote(note)"
       >
         <span class="white-key-label">{{ note }}</span>
       </div>
@@ -42,6 +46,7 @@ const BLACK_KEYS = [
         class="key black-key"
         :class="{ active: parseNote(key.note)?.chroma === activeChroma }"
         :style="{ left: key.leftPx + 'px' }"
+        @click="playNote(key.note)"
       />
     </div>
   </div>
