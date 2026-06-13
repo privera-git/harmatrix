@@ -500,6 +500,7 @@ describe('persistence', () => {
     expect(reloaded.state.sessionsPlayed['major']).toBe(2)
   })
 
+
   it('migrates storageVersion 1 data by incrementing stage by 1', () => {
     localStorage.setItem(
       'harmatrix:progress',
