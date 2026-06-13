@@ -207,6 +207,7 @@ export const useProgressStore = defineStore('progress', () => {
     state.value.currentSubStageSession = { perfectStreak: 0 }
   }
 
+
   function setLastFreePlayStage(stage: number): void {
     state.value.lastFreePlayStage = stage
   }
