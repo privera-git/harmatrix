@@ -22,7 +22,9 @@ const stageName = computed(() => STAGE_NAMES[learning.value.stage - 1] ?? `Stage
 const streak = computed(() => state.value.practiceStreak)
 const idleMode = computed(() => state.value.idleMode)
 const isIntroStage = computed(() => learning.value.stage === INTRO_STAGE)
-const isTriadsStage = computed(() => learning.value.stage === INTRO_STAGE + 1)
+const isTriadsStage = computed(
+  () => learning.value.stage === INTRO_STAGE + 1 && !state.value.unlockedContent.includes('seconds'),
+)
 
 const quality = computed(() => {
   const stageQualities = CURRICULUM[learning.value.stage - 1]
