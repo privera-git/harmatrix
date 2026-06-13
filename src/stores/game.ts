@@ -6,8 +6,9 @@ import type { MatrixPuzzle } from '@/music/matrix'
 import type { AnswerResult, ScoringOptions } from '@/music/scoring'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
+import type { IntervalGroup } from '@/music/data/intervals'
 
-type Quality = ChordQuality | ScaleMode
+type Quality = ChordQuality | ScaleMode | IntervalGroup
 
 type GameSession =
   | { phase: 'idle' }

@@ -3,10 +3,11 @@ import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
-import { CURRICULUM, SUB_STAGE_SESSION_SIZE, STAGE_NAMES } from '@/config/game'
+import { CURRICULUM, SUB_STAGE_SESSION_SIZE, STAGE_NAMES, INTRO_STAGE } from '@/config/game'
 import FreePlayPicker from '@/components/FreePlayPicker.vue'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
+import type { IntervalGroup } from '@/music/data/intervals'
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
@@ -20,6 +21,7 @@ const perfectStreak = computed(() => state.value.currentSubStageSession.perfectS
 const stageName = computed(() => STAGE_NAMES[learning.value.stage - 1] ?? `Stage ${learning.value.stage}`)
 const streak = computed(() => state.value.practiceStreak)
 const idleMode = computed(() => state.value.idleMode)
+const isIntroStage = computed(() => learning.value.stage === INTRO_STAGE)
 
 const quality = computed(() => {
   const stageQualities = CURRICULUM[learning.value.stage - 1]
@@ -39,7 +41,11 @@ function start() {
   )
 }
 
-function onFreePlaySelect(selectedQuality: ChordQuality | ScaleMode): void {
+function skipToTriads(): void {
+  progressStore.skipToTriads()
+}
+
+function onFreePlaySelect(selectedQuality: ChordQuality | ScaleMode | IntervalGroup): void {
   gameStore.startPuzzle(
     progressStore.nextDiagonalNote(),
     selectedQuality,
@@ -106,6 +112,9 @@ function onStageOpen(stageIndex: number): void {
 
       <div v-if="idleMode === 'learn'" class="learn-actions">
         <button class="start-btn" @click="start">Start</button>
+        <button v-if="isIntroStage" class="skip-btn" @click="skipToTriads">
+          Skip to Triads →
+        </button>
       </div>
     </main>
 
@@ -256,6 +265,25 @@ function onStageOpen(stageIndex: number): void {
 .start-btn:hover {
   background: #555;
   border-color: #555;
+}
+
+.skip-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.skip-btn:hover {
+  color: #333;
+}
+
+@media (prefers-color-scheme: dark) {
+  .skip-btn:hover {
+    color: #ccc;
+  }
 }
 
 .idle-footer {

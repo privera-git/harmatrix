@@ -35,7 +35,7 @@ const PERFECT = Array<'correct'>(6).fill('correct')
 const IMPERFECT: ('correct' | 'wrong')[] = [...Array<'correct'>(5).fill('correct'), 'wrong']
 
 describe('initial state', () => {
-  it('starts at stage 1, sub-stage 1', () => {
+  it('starts at stage 1, sub-stage 1 (Interval Basics)', () => {
     const store = useProgressStore()
     expect(store.state.learning).toEqual({ stage: 1, subStage: 1 })
   })
@@ -126,16 +126,37 @@ describe('advanceLearning', () => {
     expect(store.state.learning).toEqual({ stage: 1, subStage: 2 })
   })
 
-  it('advances to next stage after last sub-stage of Triads (6 sub-stages)', () => {
+  it('advances to next stage after last sub-stage of Stage 0 (Interval Basics, 8 sub-stages)', () => {
     const store = useProgressStore()
-    store.state.learning = { stage: 1, subStage: 6 }
+    store.state.learning = { stage: 1, subStage: 8 }
     store.advanceLearning()
     expect(store.state.learning).toEqual({ stage: 2, subStage: 1 })
   })
 
-  it('unlocks all Triads qualities when completing stage 1', () => {
+  it('unlocks all Stage 0 qualities when completing it', () => {
     const store = useProgressStore()
-    store.state.learning = { stage: 1, subStage: 6 }
+    store.state.learning = { stage: 1, subStage: 8 }
+    store.advanceLearning()
+    expect(store.state.unlockedContent).toContain('seconds')
+    expect(store.state.unlockedContent).toContain('thirds')
+    expect(store.state.unlockedContent).toContain('fourthsFifths')
+    expect(store.state.unlockedContent).toContain('sixths')
+    expect(store.state.unlockedContent).toContain('sevenths')
+    expect(store.state.unlockedContent).toContain('ninths')
+    expect(store.state.unlockedContent).toContain('alteredExtensions')
+    expect(store.state.unlockedContent).toContain('thirteenth')
+  })
+
+  it('advances to next stage after last sub-stage of Triads (stage 2, 6 sub-stages)', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 2, subStage: 6 }
+    store.advanceLearning()
+    expect(store.state.learning).toEqual({ stage: 3, subStage: 1 })
+  })
+
+  it('unlocks all Triads qualities when completing stage 2', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 2, subStage: 6 }
     store.advanceLearning()
     expect(store.state.unlockedContent).toContain('major')
     expect(store.state.unlockedContent).toContain('minor')
@@ -171,6 +192,21 @@ describe('unlockContent', () => {
     store.unlockContent('major')
     store.unlockContent('major')
     expect(store.state.unlockedContent).toHaveLength(1)
+  })
+})
+
+describe('skipToTriads', () => {
+  it('sets learning to stage 2 (Triads), subStage 1', () => {
+    const store = useProgressStore()
+    store.skipToTriads()
+    expect(store.state.learning).toEqual({ stage: 2, subStage: 1 })
+  })
+
+  it('resets perfectStreak', () => {
+    const store = useProgressStore()
+    store.recordSessionResults('major', PERFECT)
+    store.skipToTriads()
+    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
   })
 })
 
@@ -223,10 +259,16 @@ describe('jumpToPosition', () => {
     expect(store.state.learning).toEqual({ stage: 1, subStage: 3 })
   })
 
-  it('jumps to stage 1 sub-stage 5 when valid (Triads has 6 sub-stages)', () => {
+  it('jumps to stage 1 sub-stage 5 when valid (Stage 0 has 8 sub-stages)', () => {
     const store = useProgressStore()
     store.jumpToPosition(1, 5)
     expect(store.state.learning).toEqual({ stage: 1, subStage: 5 })
+  })
+
+  it('jumps to stage 2 sub-stage 4 when valid (Triads has 6 sub-stages)', () => {
+    const store = useProgressStore()
+    store.jumpToPosition(2, 4)
+    expect(store.state.learning).toEqual({ stage: 2, subStage: 4 })
   })
 
   it('resets perfectStreak to 0 on jump', () => {
@@ -262,38 +304,59 @@ describe('jumpToPosition', () => {
 })
 
 describe('freePlayAccess', () => {
-  it('locks everything when user is on sub-stage 1 of stage 1', () => {
+  it('Stage 0 (Interval Basics) is always fully accessible regardless of progress', () => {
     const store = useProgressStore()
-    const access = store.freePlayAccess
-    expect(access.every((s) => !s.accessible)).toBe(true)
-    expect(access.every((s) => s.subStages.every((ss) => !ss.accessible))).toBe(true)
-  })
-
-  it('makes stage 1 (Triads) partially accessible when user is on subStage 2 of stage 1', () => {
-    const store = useProgressStore()
-    store.state.learning = { stage: 1, subStage: 2 }
-    const access = store.freePlayAccess
-    expect(access[0]!.accessible).toBe(true)
-    expect(access[0]!.subStages[0]!.accessible).toBe(true)
-    expect(access[0]!.subStages[1]!.accessible).toBe(true)
-    expect(access[0]!.subStages[2]!.accessible).toBe(false)
-    expect(access.slice(1).every((s) => !s.accessible)).toBe(true)
-  })
-
-  it('makes stage 1 fully accessible and stage 2 locked when user starts stage 2', () => {
-    const store = useProgressStore()
-    store.state.learning = { stage: 2, subStage: 1 }
     const access = store.freePlayAccess
     expect(access[0]!.accessible).toBe(true)
     expect(access[0]!.subStages.every((ss) => ss.accessible)).toBe(true)
-    expect(access[1]!.accessible).toBe(false)
   })
 
-  it('includes the quality for each sub-stage of Triads', () => {
+  it('Stage 0 always-accessible even for a brand-new player at stage 1, subStage 1', () => {
     const store = useProgressStore()
-    store.state.learning = { stage: 1, subStage: 2 }
-    expect(store.freePlayAccess[0]!.subStages[0]!.quality).toBe('major')
-    expect(store.freePlayAccess[0]!.subStages[1]!.quality).toBe('minor')
+    const access = store.freePlayAccess
+    // access[0] = Stage 0, always open
+    expect(access[0]!.accessible).toBe(true)
+    // Stages 1+ (index 1+) are all locked
+    expect(access.slice(1).every((s) => !s.accessible)).toBe(true)
+    expect(access.slice(1).every((s) => s.subStages.every((ss) => !ss.accessible))).toBe(true)
+  })
+
+  it('makes Triads (stage 2, index 1) partially accessible when user is on subStage 2 of stage 2', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 2, subStage: 2 }
+    const access = store.freePlayAccess
+    // Stage 0 still always accessible
+    expect(access[0]!.accessible).toBe(true)
+    // Triads (stage 2, index 1) is accessible
+    expect(access[1]!.accessible).toBe(true)
+    expect(access[1]!.subStages[0]!.accessible).toBe(true)
+    expect(access[1]!.subStages[1]!.accessible).toBe(true)
+    expect(access[1]!.subStages[2]!.accessible).toBe(false)
+    // Stage 2+ (index 2+) locked
+    expect(access.slice(2).every((s) => !s.accessible)).toBe(true)
+  })
+
+  it('makes Triads fully accessible and Tetrads locked when user starts stage 3', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 3, subStage: 1 }
+    const access = store.freePlayAccess
+    expect(access[0]!.accessible).toBe(true)
+    expect(access[1]!.accessible).toBe(true)
+    expect(access[1]!.subStages.every((ss) => ss.accessible)).toBe(true)
+    expect(access[2]!.accessible).toBe(false)
+  })
+
+  it('includes Stage 0 qualities and marks them all accessible', () => {
+    const store = useProgressStore()
+    expect(store.freePlayAccess[0]!.subStages[0]!.quality).toBe('seconds')
+    expect(store.freePlayAccess[0]!.subStages[0]!.accessible).toBe(true)
+  })
+
+  it('includes Triads qualities at index 1', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 2, subStage: 2 }
+    expect(store.freePlayAccess[1]!.subStages[0]!.quality).toBe('major')
+    expect(store.freePlayAccess[1]!.subStages[1]!.quality).toBe('minor')
   })
 })
 
@@ -357,4 +420,24 @@ describe('persistence', () => {
     expect(reloaded.state.idleMode).toBe('freePlay')
   })
 
+  it('migrates storageVersion 1 data by incrementing stage by 1', () => {
+    localStorage.setItem(
+      'harmatrix:progress',
+      JSON.stringify({ storageVersion: 1, learning: { stage: 2, subStage: 3 } }),
+    )
+    setActivePinia(createPinia())
+    const store = useProgressStore()
+    expect(store.state.learning).toEqual({ stage: 3, subStage: 3 })
+    expect(store.state.storageVersion).toBe(2)
+  })
+
+  it('does not migrate data that already has storageVersion 2', () => {
+    localStorage.setItem(
+      'harmatrix:progress',
+      JSON.stringify({ storageVersion: 2, learning: { stage: 2, subStage: 3 } }),
+    )
+    setActivePinia(createPinia())
+    const store = useProgressStore()
+    expect(store.state.learning).toEqual({ stage: 2, subStage: 3 })
+  })
 })

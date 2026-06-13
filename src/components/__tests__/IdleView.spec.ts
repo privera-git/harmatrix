@@ -63,21 +63,21 @@ describe('IdleView', () => {
   describe('learning position', () => {
     it('shows stage name on fresh store', () => {
       const wrapper = mountView()
-      expect(wrapper.text()).toContain('Triads')
+      expect(wrapper.text()).toContain('Interval Basics')
     })
 
     it('shows quality matching current learning position', () => {
       const wrapper = mountView()
-      // Default position is stage 1, subStage 1 → 'major' (Triads SS-1)
-      expect(wrapper.text()).toContain('major')
+      // Default position is stage 1, subStage 1 → 'seconds' (Interval Basics SS-1)
+      expect(wrapper.text()).toContain('seconds')
     })
 
     it('shows updated quality when learning position advances', async () => {
       const progress = useProgressStore()
       progress.state.learning = { stage: 1, subStage: 2 }
       const wrapper = mountView()
-      // stage 1, subStage 2 → 'minor' (Triads SS-2)
-      expect(wrapper.text()).toContain('minor')
+      // stage 1, subStage 2 → 'thirds' (Interval Basics SS-2)
+      expect(wrapper.text()).toContain('thirds')
     })
 
     it('shows perfect streak from store', async () => {
@@ -141,6 +141,47 @@ describe('IdleView', () => {
     })
   })
 
+  describe('skip button', () => {
+    it('shows Skip button in learn mode at Stage 0 (Interval Basics, default)', () => {
+      const wrapper = mountView()
+      expect(wrapper.find('.skip-btn').exists()).toBe(true)
+    })
+
+    it('skip button text contains "Triads"', () => {
+      const wrapper = mountView()
+      expect(wrapper.find('.skip-btn').text()).toContain('Triads')
+    })
+
+    it('hides Skip button in learn mode when at Stage 2 (Triads)', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 }
+      const wrapper = mountView()
+      expect(wrapper.find('.skip-btn').exists()).toBe(false)
+    })
+
+    it('hides Skip button in free play mode', async () => {
+      const progress = useProgressStore()
+      progress.state.idleMode = 'freePlay'
+      const wrapper = mountView()
+      expect(wrapper.find('.skip-btn').exists()).toBe(false)
+    })
+
+    it('clicking Skip calls skipToTriads', async () => {
+      const progress = useProgressStore()
+      const spy = vi.spyOn(progress, 'skipToTriads')
+      const wrapper = mountView()
+      await wrapper.find('.skip-btn').trigger('click')
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
+
+    it('after skip, skip button disappears', async () => {
+      const wrapper = mountView()
+      await wrapper.find('.skip-btn').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('.skip-btn').exists()).toBe(false)
+    })
+  })
+
   describe('mode toggle', () => {
     it('renders Learn and Free Play buttons', () => {
       const wrapper = mountView()
@@ -188,7 +229,7 @@ describe('IdleView', () => {
     it('shows FreePlayPicker in free play mode', async () => {
       const progress = useProgressStore()
       progress.state.idleMode = 'freePlay'
-      progress.state.learning = { stage: 1, subStage: 2 }
+      progress.state.learning = { stage: 2, subStage: 2 }
       const wrapper = mountView()
       expect(wrapper.findComponent({ name: 'FreePlayPicker' }).exists()).toBe(true)
     })
@@ -205,7 +246,7 @@ describe('IdleView', () => {
     it('starts a free play session when FreePlayPicker emits play', async () => {
       const progress = useProgressStore()
       progress.state.idleMode = 'freePlay'
-      progress.state.learning = { stage: 1, subStage: 2 }
+      progress.state.learning = { stage: 2, subStage: 2 }
       const game = useGameStore()
       const wrapper = mountView()
       const picker = wrapper.findComponent({ name: 'FreePlayPicker' })
@@ -218,7 +259,7 @@ describe('IdleView', () => {
     it('persists last free play stage when FreePlayPicker emits stageOpen', async () => {
       const progress = useProgressStore()
       progress.state.idleMode = 'freePlay'
-      progress.state.learning = { stage: 1, subStage: 2 }
+      progress.state.learning = { stage: 2, subStage: 2 }
       const spy = vi.spyOn(progress, 'setLastFreePlayStage')
       const wrapper = mountView()
       const picker = wrapper.findComponent({ name: 'FreePlayPicker' })
