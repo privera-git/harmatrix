@@ -522,3 +522,69 @@ describe('persistence', () => {
     expect(store.state.learning).toEqual({ stage: 2, subStage: 3 })
   })
 })
+
+describe('nextDiagonalNote', () => {
+  it('returns C on the very first session for a quality', () => {
+    const store = useProgressStore()
+    // sessionsPlayed['major'] is 0 by default
+    expect(store.nextDiagonalNote('major', false)).toBe('C')
+  })
+
+  it('returns C in learn mode regardless of streak when sessionsPlayed is 0', () => {
+    const store = useProgressStore()
+    store.state.currentSubStageSession.perfectStreak = 9
+    expect(store.nextDiagonalNote('major', false)).toBe('C')
+  })
+
+  it('returns a natural note for streak 0-4 after first session', () => {
+    const store = useProgressStore()
+    store.state.sessionsPlayed['major'] = 1
+    const naturals = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+    for (let streak = 0; streak <= 4; streak++) {
+      store.state.currentSubStageSession.perfectStreak = streak
+      store.state.diagonalNoteHistory = []
+      for (let i = 0; i < 10; i++) {
+        const note = store.nextDiagonalNote('major', false)
+        expect(naturals).toContain(note)
+        store.state.diagonalNoteHistory = []
+      }
+    }
+  })
+
+  it('returns an altered note for streak 8-9 after first session', () => {
+    const store = useProgressStore()
+    store.state.sessionsPlayed['major'] = 1
+    const naturals = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+    for (const streak of [8, 9]) {
+      store.state.currentSubStageSession.perfectStreak = streak
+      store.state.diagonalNoteHistory = []
+      for (let i = 0; i < 10; i++) {
+        const note = store.nextDiagonalNote('major', false)
+        expect(naturals).not.toContain(note)
+        store.state.diagonalNoteHistory = []
+      }
+    }
+  })
+
+  it('ignores streak rules in free play mode', () => {
+    const store = useProgressStore()
+    store.state.sessionsPlayed['major'] = 0
+    store.state.currentSubStageSession.perfectStreak = 0
+    // Should not return C every time — free play uses full pool
+    const notes = new Set(Array.from({ length: 40 }, () => {
+      store.state.diagonalNoteHistory = []
+      return store.nextDiagonalNote('major', true)
+    }))
+    expect(notes.size).toBeGreaterThan(1)
+  })
+
+  it('appends note to diagonalNoteHistory and limits to last 3', () => {
+    const store = useProgressStore()
+    store.state.sessionsPlayed['major'] = 1
+    store.nextDiagonalNote('major', false)
+    store.nextDiagonalNote('major', false)
+    store.nextDiagonalNote('major', false)
+    store.nextDiagonalNote('major', false)
+    expect(store.state.diagonalNoteHistory).toHaveLength(3)
+  })
+})

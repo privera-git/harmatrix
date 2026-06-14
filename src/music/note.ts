@@ -56,10 +56,19 @@ export function isSameSpelling(a: string, b: string): boolean {
 const DIAGONAL_ACCIDENTALS: Accidental[] = ['b', '', '#']
 const DIAGONAL_POOL = LETTERS.flatMap((l) => DIAGONAL_ACCIDENTALS.map((a) => l + a))
 
-export function randomDiagonalNote(exclude: string[] = []): string {
-  const pool = exclude.length > 0 ? DIAGONAL_POOL.filter((n) => !exclude.includes(n)) : DIAGONAL_POOL
-  const candidates = pool.length > 0 ? pool : DIAGONAL_POOL
-  return candidates[Math.floor(Math.random() * candidates.length)]!
+export const NATURAL_DIAGONAL_POOL = LETTERS.map((l) => l as string)
+export const ALTERED_DIAGONAL_POOL = LETTERS.flatMap((l) => (['b', '#'] as const).map((a) => l + a))
+
+export type DiagonalPool = 'natural' | 'full' | 'altered'
+
+export function randomDiagonalNote(exclude: string[] = [], pool: DiagonalPool = 'full'): string {
+  const base =
+    pool === 'natural' ? NATURAL_DIAGONAL_POOL
+    : pool === 'altered' ? ALTERED_DIAGONAL_POOL
+    : DIAGONAL_POOL
+  const candidates = base.filter((n) => !exclude.includes(n))
+  const final = candidates.length > 0 ? candidates : base
+  return final[Math.floor(Math.random() * final.length)]!
 }
 
 export function enharmonicsOf(note: string): string[] {

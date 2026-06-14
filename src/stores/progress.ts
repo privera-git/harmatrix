@@ -2,6 +2,7 @@ import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { CURRICULUM, SUB_STAGE_SESSION_SIZE, INTRO_STAGE } from '@/config/game'
 import { randomDiagonalNote } from '@/music/note'
+import type { DiagonalPool } from '@/music/note'
 import type { AnswerResult } from '@/music/scoring'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
@@ -171,9 +172,25 @@ export const useProgressStore = defineStore('progress', () => {
     state.value.lastPracticeDate = today
   }
 
-  function nextDiagonalNote(): string {
+  function poolForStreak(streak: number): DiagonalPool {
+    if (streak <= 4) return 'natural'
+    if (streak <= 7) return 'full'
+    return 'altered'
+  }
+
+  function nextDiagonalNote(quality: Quality, isFreePlay: boolean): string {
     const history = state.value.diagonalNoteHistory ?? []
-    const note = randomDiagonalNote(history)
+    let note: string
+
+    if (isFreePlay) {
+      note = randomDiagonalNote(history, 'full')
+    } else if ((state.value.sessionsPlayed[quality] ?? 0) === 0) {
+      note = 'C'
+    } else {
+      const pool = poolForStreak(state.value.currentSubStageSession.perfectStreak)
+      note = randomDiagonalNote(history, pool)
+    }
+
     state.value.diagonalNoteHistory = [...history, note].slice(-3)
     return note
   }
