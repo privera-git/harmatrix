@@ -33,6 +33,14 @@ const guidedAnswers = computed<string[][]>(() => {
 
 const activeCell = ref<{ row: number; col: number } | null>(null)
 
+const canRevealHint = computed(() => {
+  if (guidanceLevel.value !== 'hint') return false
+  if (!activeCell.value) return false
+  const { row, col } = activeCell.value
+  if (displayCells.value[row]?.[col]?.isGiven) return false
+  return !revealedHints.value.includes(`${row},${col}`)
+})
+
 const displayCells = computed<MatrixCell[][]>(() => {
   if (session.value.phase !== 'playing') return []
   const { puzzle, answers } = session.value
@@ -76,6 +84,11 @@ const puzzleTitle = computed(() => {
   if (session.value.phase !== 'playing') return ''
   return formatPuzzleTitle(session.value.puzzle.diagonalNote, session.value.puzzle.quality)
 })
+
+function revealActiveHint() {
+  if (!activeCell.value) return
+  gameStore.revealHint(activeCell.value.row, activeCell.value.col)
+}
 
 function abandon() {
   activeCell.value = null
@@ -127,7 +140,15 @@ function submit() {
         @reveal-hint="gameStore.revealHint"
       />
 
-      <div class="progress-indicator">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</div>
+      <div class="progress-indicator">
+        <span>({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
+        <button
+          v-if="guidanceLevel === 'hint'"
+          class="hint-action-btn"
+          :disabled="!canRevealHint"
+          @click="revealActiveHint"
+        >Hint</button>
+      </div>
 
       <PianoKeyboard v-if="showPiano" :active-note="activeCellNote" />
 
@@ -184,8 +205,30 @@ function submit() {
 }
 
 .progress-indicator {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   font-size: 0.85rem;
   color: #666;
+}
+
+.hint-action-btn {
+  background: transparent;
+  border: 1px solid #aaa;
+  color: #888;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.75rem;
+  cursor: pointer;
+}
+
+.hint-action-btn:not(:disabled):hover {
+  border-color: #0066cc;
+  color: #0066cc;
+}
+
+.hint-action-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .submit-btn {
