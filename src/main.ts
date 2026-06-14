@@ -14,12 +14,18 @@ if (FEATURES.DEV_STAGE_JUMP) {
   const params = new URLSearchParams(window.location.search)
   const stageParam = params.get('stage')
   const subStageParam = params.get('substage')
-  if (stageParam !== null || subStageParam !== null) {
+  const guidanceParam = params.get('guidance')
+  if (stageParam !== null || subStageParam !== null || guidanceParam !== null) {
     const store = useProgressStore(pinia)
-    store.jumpToPosition(
-      parseInt(stageParam ?? '1', 10),
-      parseInt(subStageParam ?? '1', 10),
-    )
+    if (stageParam !== null || subStageParam !== null) {
+      store.jumpToPosition(
+        parseInt(stageParam ?? '1', 10),
+        parseInt(subStageParam ?? '1', 10),
+      )
+    }
+    if (guidanceParam === 'full' || guidanceParam === 'hint' || guidanceParam === 'none') {
+      store.setGuidanceOverride(guidanceParam)
+    }
   }
 }
 

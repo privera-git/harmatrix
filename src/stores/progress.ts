@@ -96,6 +96,8 @@ function daysBetween(a: string, b: string): number {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / msPerDay)
 }
 
+let devGuidanceOverride: 'full' | 'hint' | 'none' | null = null
+
 export const useProgressStore = defineStore('progress', () => {
   const state = ref<ProgressState>(loadState())
 
@@ -226,10 +228,15 @@ export const useProgressStore = defineStore('progress', () => {
   }
 
   function guidanceLevelFor(quality: Quality): 'full' | 'hint' | 'none' {
+    if (devGuidanceOverride !== null) return devGuidanceOverride
     const n = state.value.sessionsPlayed[quality] ?? 0
     if (n < 3) return 'full'
     if (n < 6) return 'hint'
     return 'none'
+  }
+
+  function setGuidanceOverride(level: 'full' | 'hint' | 'none' | null): void {
+    devGuidanceOverride = level
   }
 
   function skipToTriads(): void {
@@ -264,5 +271,6 @@ export const useProgressStore = defineStore('progress', () => {
     skipToTriads,
     setLastFreePlayStage,
     setIdleMode,
+    setGuidanceOverride,
   }
 })
