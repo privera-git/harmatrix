@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { CURRICULUM, SUB_STAGE_SESSION_SIZE, STAGE_NAMES, INTRO_STAGE } from '@/config/game'
+import { FEATURES } from '@/config/features'
 import FreePlayPicker from '@/components/FreePlayPicker.vue'
+import TheoryModal from '@/components/TheoryModal.vue'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
 import type { IntervalGroup } from '@/music/data/intervals'
@@ -15,6 +17,7 @@ const { state, freePlayAccess } = storeToRefs(progressStore)
 
 const noDegreeLabels = ref(false)
 const noPianoKeyboard = ref(false)
+const showTheoryModal = ref(false)
 
 const learning = computed(() => state.value.learning)
 const perfectStreak = computed(() => state.value.currentSubStageSession.perfectStreak)
@@ -97,8 +100,18 @@ function onStageOpen(stageIndex: number): void {
         <div class="learning-position">{{ stageName }}</div>
         <div class="quality-label">
           <span>Quality: {{ quality }}</span>
+          <button
+            v-if="FEATURES.THEORY_MODAL"
+            class="info-btn"
+            @click="showTheoryModal = true"
+          >ℹ</button>
           <span class="quality-progress">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
         </div>
+        <TheoryModal
+          v-if="FEATURES.THEORY_MODAL && showTheoryModal"
+          :quality="quality"
+          @close="showTheoryModal = false"
+        />
       </template>
 
       <FreePlayPicker
@@ -219,11 +232,32 @@ function onStageOpen(stageIndex: number): void {
 
 .quality-label {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
+  gap: 0.5rem;
   font-size: 1rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.info-btn {
+  background: transparent;
+  border: 1px solid #aaa;
+  color: #888;
+  font-size: 0.75rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+.info-btn:hover {
+  border-color: #0066cc;
+  color: #0066cc;
 }
 
 .quality-progress {
@@ -231,6 +265,7 @@ function onStageOpen(stageIndex: number): void {
   font-weight: 400;
   color: #666;
   text-transform: none;
+  margin-left: auto;
 }
 
 .difficulty-section {

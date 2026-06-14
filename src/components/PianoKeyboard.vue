@@ -7,12 +7,33 @@ const { playNote } = useAudio()
 
 const props = defineProps<{
   activeNote?: string | null
+  activeNotes?: string[]
+  activeOnly?: boolean
 }>()
 
 const activeChroma = computed<number | null>(() => {
   if (!props.activeNote) return null
   return parseNote(props.activeNote)?.chroma ?? null
 })
+
+const activeChromas = computed<Set<number>>(() => {
+  const set = new Set<number>()
+  if (activeChroma.value !== null) set.add(activeChroma.value)
+  for (const n of props.activeNotes ?? []) {
+    const c = parseNote(n)?.chroma
+    if (c !== undefined) set.add(c)
+  }
+  return set
+})
+
+function isKeyActive(noteName: string): boolean {
+  return activeChromas.value.has(parseNote(noteName)?.chroma ?? -1)
+}
+
+function handleKeyClick(noteName: string): void {
+  if (props.activeOnly && !isKeyActive(noteName)) return
+  playNote(noteName)
+}
 
 const WHITE_KEY_WIDTH = 36
 
@@ -35,8 +56,8 @@ const BLACK_KEYS = [
         v-for="note in WHITE_NOTES"
         :key="note"
         class="key white-key"
-        :class="{ active: parseNote(note)?.chroma === activeChroma }"
-        @click="playNote(note)"
+        :class="{ active: isKeyActive(note), inactive: props.activeOnly && !isKeyActive(note) }"
+        @click="handleKeyClick(note)"
       >
         <span class="white-key-label">{{ note }}</span>
       </div>
@@ -44,9 +65,9 @@ const BLACK_KEYS = [
         v-for="key in BLACK_KEYS"
         :key="key.note"
         class="key black-key"
-        :class="{ active: parseNote(key.note)?.chroma === activeChroma }"
+        :class="{ active: isKeyActive(key.note), inactive: props.activeOnly && !isKeyActive(key.note) }"
         :style="{ left: key.leftPx + 'px' }"
-        @click="playNote(key.note)"
+        @click="handleKeyClick(key.note)"
       />
     </div>
   </div>
@@ -102,5 +123,11 @@ const BLACK_KEYS = [
 
 .black-key.active {
   background: #0066cc;
+}
+
+.key.inactive {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.4;
 }
 </style>

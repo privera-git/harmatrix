@@ -9,6 +9,7 @@ import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import NotePicker from '@/components/NotePicker.vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
+import TheoryModal from '@/components/TheoryModal.vue'
 import { useAudio } from '@/composables/useAudio'
 import type { MatrixCell } from '@/music/matrix'
 
@@ -32,6 +33,7 @@ const guidedAnswers = computed<string[][]>(() => {
 })
 
 const activeCell = ref<{ row: number; col: number } | null>(null)
+const showTheoryModal = ref(false)
 
 const canRevealHint = computed(() => {
   if (guidanceLevel.value !== 'hint') return false
@@ -123,8 +125,18 @@ function submit() {
   <div v-if="session.phase === 'playing'" class="playing-view">
     <header class="playing-header">
       <span class="puzzle-label">{{ puzzleTitle }}</span>
+      <button
+        v-if="FEATURES.THEORY_MODAL"
+        class="info-btn"
+        @click="showTheoryModal = true"
+      >ℹ</button>
       <button class="abandon-btn" @click="abandon">Abandon</button>
     </header>
+    <TheoryModal
+      v-if="FEATURES.THEORY_MODAL && showTheoryModal"
+      :quality="session.puzzle.quality"
+      @close="showTheoryModal = false"
+    />
 
     <main class="playing-main">
       <MatrixGrid
@@ -179,6 +191,27 @@ function submit() {
 
 .puzzle-label {
   font-weight: 600;
+}
+
+.info-btn {
+  background: transparent;
+  border: 1px solid #aaa;
+  color: #888;
+  font-size: 0.75rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+.info-btn:hover {
+  border-color: #0066cc;
+  color: #0066cc;
 }
 
 .abandon-btn {
