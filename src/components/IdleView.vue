@@ -38,7 +38,7 @@ function setMode(mode: 'learn' | 'freePlay'): void {
 function start() {
   const opts = { noDegreeLabels: noDegreeLabels.value, noPianoKeyboard: noPianoKeyboard.value }
   gameStore.startPuzzle(
-    progressStore.nextDiagonalNote(),
+    progressStore.nextDiagonalNote(quality.value, false),
     quality.value,
     opts,
     false,
@@ -57,7 +57,7 @@ function backToIntervals(): void {
 function onFreePlaySelect(selectedQuality: ChordQuality | ScaleMode | IntervalGroup): void {
   const opts = { noDegreeLabels: noDegreeLabels.value, noPianoKeyboard: noPianoKeyboard.value }
   gameStore.startPuzzle(
-    progressStore.nextDiagonalNote(),
+    progressStore.nextDiagonalNote(selectedQuality, true),
     selectedQuality,
     opts,
     true,

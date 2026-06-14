@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { parseNote, isSamePitch, isSameSpelling, enharmonicsOf } from '@/music/note'
+import {
+  parseNote,
+  isSamePitch,
+  isSameSpelling,
+  enharmonicsOf,
+  randomDiagonalNote,
+  NATURAL_DIAGONAL_POOL,
+  ALTERED_DIAGONAL_POOL,
+} from '@/music/note'
 
 describe('parseNote', () => {
   it('parses a natural note', () => {
@@ -155,5 +163,54 @@ describe('enharmonicsOf', () => {
   it('returns empty array for invalid input', () => {
     expect(enharmonicsOf('X')).toEqual([])
     expect(enharmonicsOf('')).toEqual([])
+  })
+})
+
+describe('randomDiagonalNote', () => {
+  it('returns a natural note when pool is natural', () => {
+    for (let i = 0; i < 20; i++) {
+      expect(NATURAL_DIAGONAL_POOL).toContain(randomDiagonalNote([], 'natural'))
+    }
+  })
+
+  it('returns an altered note when pool is altered', () => {
+    for (let i = 0; i < 20; i++) {
+      expect(ALTERED_DIAGONAL_POOL).toContain(randomDiagonalNote([], 'altered'))
+    }
+  })
+
+  it('never returns an altered note from the natural pool', () => {
+    for (let i = 0; i < 20; i++) {
+      const note = randomDiagonalNote([], 'natural')
+      expect(note).toMatch(/^[A-G]$/)
+    }
+  })
+
+  it('never returns a natural note from the altered pool', () => {
+    for (let i = 0; i < 20; i++) {
+      const note = randomDiagonalNote([], 'altered')
+      expect(note).toMatch(/^[A-G][b#]$/)
+    }
+  })
+
+  it('avoids excluded notes within the pool', () => {
+    const exclude = ['C', 'D', 'E', 'F', 'G']
+    for (let i = 0; i < 20; i++) {
+      expect(exclude).not.toContain(randomDiagonalNote(exclude, 'natural'))
+    }
+  })
+
+  it('falls back to full pool when all natural notes are excluded', () => {
+    const allNaturals = [...NATURAL_DIAGONAL_POOL]
+    const note = randomDiagonalNote(allNaturals, 'natural')
+    expect(NATURAL_DIAGONAL_POOL).toContain(note)
+  })
+
+  it('defaults to full pool when no pool argument given', () => {
+    const notes = new Set(Array.from({ length: 50 }, () => randomDiagonalNote()))
+    const hasNatural = [...notes].some((n) => NATURAL_DIAGONAL_POOL.includes(n))
+    const hasAltered = [...notes].some((n) => ALTERED_DIAGONAL_POOL.includes(n))
+    expect(hasNatural).toBe(true)
+    expect(hasAltered).toBe(true)
   })
 })
