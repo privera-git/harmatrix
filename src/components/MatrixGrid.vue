@@ -73,11 +73,6 @@ function ghostNoteFor(cell: MatrixCell): string | undefined {
   return undefined
 }
 
-function showHintButton(cell: MatrixCell): boolean {
-  if (props.mode !== 'input' || cell.isGiven || props.guidanceLevel !== 'hint') return false
-  const key = `${cell.row},${cell.col}`
-  return !(props.revealedHints?.includes(key) ?? false)
-}
 </script>
 
 <template>
@@ -107,11 +102,6 @@ function showHintButton(cell: MatrixCell): boolean {
           v-if="!cell.note && ghostNoteFor(cell)"
           class="cell-ghost-indicator"
         />
-        <button
-          v-if="showHintButton(cell)"
-          class="hint-btn"
-          @click.stop="emit('reveal-hint', cell.row, cell.col)"
-        >?</button>
         <span v-if="mode === 'results' && !cell.isGiven && resultFor(cell)" class="cell-result">{{
           RESULT_SYMBOL[resultFor(cell) ?? 'wrong']
         }}</span>
@@ -195,25 +185,6 @@ function showHintButton(cell: MatrixCell): boolean {
 .matrix-cell:has(.cell-ghost-indicator) .cell-note {
   opacity: 0.35;
   font-style: italic;
-}
-
-.hint-btn {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 102, 204, 0.08);
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #0066cc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hint-btn:hover {
-  background: rgba(0, 102, 204, 0.18);
 }
 
 .result-correct {
