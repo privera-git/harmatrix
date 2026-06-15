@@ -1,8 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import type { MatrixCell } from '@/music/matrix'
 import type { AnswerResult } from '@/music/scoring'
+
+const mockPlayNote = vi.fn<(note: string) => void>()
+vi.mock('@/composables/useAudio', () => ({
+  useAudio: () => ({ playNote: mockPlayNote, playJingle: vi.fn<() => void>() }),
+}))
 
 function makeCell(row: number, col: number): MatrixCell {
   return { note: `N${row}${col}`, isGiven: row === col, row, col }
@@ -158,6 +163,114 @@ describe('MatrixGrid', () => {
       })
       await wrapper.findAll('.matrix-cell')[0]!.trigger('click')
       expect(wrapper.emitted('cell-click')).toBeUndefined()
+    })
+  })
+
+  describe('ascending column playback', () => {
+    // F major chord: semitones [0,4,7], diagonal note F
+    // cell(r,c) = F + semitones[r] - semitones[c]
+    // Col 0 (given F at row0): F(given), A(row1), C(row2)
+    // Col 2 (given F at row2): Bb(row0), D(row1), F(given)
+    const fMajorCells: MatrixCell[][] = [
+      [
+        { note: 'F', isGiven: true, row: 0, col: 0 },
+        { note: 'Db', isGiven: false, row: 0, col: 1 },
+        { note: 'Bb', isGiven: false, row: 0, col: 2 },
+      ],
+      [
+        { note: 'A', isGiven: false, row: 1, col: 0 },
+        { note: 'F', isGiven: true, row: 1, col: 1 },
+        { note: 'D', isGiven: false, row: 1, col: 2 },
+      ],
+      [
+        { note: 'C', isGiven: false, row: 2, col: 0 },
+        { note: 'A', isGiven: false, row: 2, col: 1 },
+        { note: 'F', isGiven: true, row: 2, col: 2 },
+      ],
+    ]
+    const fMajorSemitones = [0, 4, 7]
+
+    // displayRows reverses cells: [row2, row1, row0]
+    // DOM cell indices:
+    //   0:(r2,c0)=C  1:(r2,c1)=A  2:(r2,c2)=F(given)
+    //   3:(r1,c0)=A  4:(r1,c1)=F(given)  5:(r1,c2)=D
+    //   6:(r0,c0)=F(given)  7:(r0,c1)=Db  8:(r0,c2)=Bb
+
+    beforeEach(() => {
+      mockPlayNote.mockClear()
+    })
+
+    it('plays A4 when clicking A above the given F4 in col 0', async () => {
+      const wrapper = mount(MatrixGrid, {
+        props: {
+          cells: fMajorCells,
+          mode: 'input',
+          showDegreeLabels: false,
+          intervalSemitones: fMajorSemitones,
+        },
+      })
+      await wrapper.findAll('.matrix-cell')[3]!.trigger('click') // (row1, col0) = A
+      expect(mockPlayNote).toHaveBeenCalledWith('A4')
+    })
+
+    it('plays C5 when clicking C above A4 in col 0', async () => {
+      const wrapper = mount(MatrixGrid, {
+        props: {
+          cells: fMajorCells,
+          mode: 'input',
+          showDegreeLabels: false,
+          intervalSemitones: fMajorSemitones,
+        },
+      })
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // (row2, col0) = C
+      expect(mockPlayNote).toHaveBeenCalledWith('C5')
+    })
+
+    it('plays Bb3 when clicking Bb below the given F4 in col 2', async () => {
+      const wrapper = mount(MatrixGrid, {
+        props: {
+          cells: fMajorCells,
+          mode: 'input',
+          showDegreeLabels: false,
+          intervalSemitones: fMajorSemitones,
+        },
+      })
+      await wrapper.findAll('.matrix-cell')[8]!.trigger('click') // (row0, col2) = Bb
+      expect(mockPlayNote).toHaveBeenCalledWith('Bb3')
+    })
+
+    it('plays D4 when clicking D below F4 in col 2', async () => {
+      const wrapper = mount(MatrixGrid, {
+        props: {
+          cells: fMajorCells,
+          mode: 'input',
+          showDegreeLabels: false,
+          intervalSemitones: fMajorSemitones,
+        },
+      })
+      await wrapper.findAll('.matrix-cell')[5]!.trigger('click') // (row1, col2) = D
+      expect(mockPlayNote).toHaveBeenCalledWith('D4')
+    })
+
+    it('plays F4 when clicking the given cell', async () => {
+      const wrapper = mount(MatrixGrid, {
+        props: {
+          cells: fMajorCells,
+          mode: 'input',
+          showDegreeLabels: false,
+          intervalSemitones: fMajorSemitones,
+        },
+      })
+      await wrapper.findAll('.matrix-cell')[6]!.trigger('click') // (row0, col0) = F given
+      expect(mockPlayNote).toHaveBeenCalledWith('F4')
+    })
+
+    it('falls back to bare note when intervalSemitones is absent', async () => {
+      const wrapper = mount(MatrixGrid, {
+        props: { cells: fMajorCells, mode: 'input', showDegreeLabels: false },
+      })
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // (row2, col0) = C
+      expect(mockPlayNote).toHaveBeenCalledWith('C')
     })
   })
 
