@@ -6,6 +6,13 @@ import { useProgressStore } from '@/stores/progress'
 import { FEATURES } from '@/config/features'
 import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
 import { formatPuzzleTitle } from '@/music/display'
+import { CHORD_CATALOG } from '@/music/data/chords'
+import type { ChordQuality } from '@/music/data/chords'
+import { SCALE_CATALOG } from '@/music/data/scales'
+import type { ScaleMode } from '@/music/data/scales'
+import { INTERVAL_CATALOG } from '@/music/data/intervals'
+import type { IntervalGroup } from '@/music/data/intervals'
+import { Interval } from '@/music/tonal'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import NotePicker from '@/components/NotePicker.vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
@@ -82,6 +89,16 @@ function onCellClick(row: number, col: number) {
   activeCell.value = { row, col }
 }
 
+const puzzleIntervalSemitones = computed<number[]>(() => {
+  if (session.value.phase !== 'playing') return []
+  const q = session.value.puzzle.quality
+  const entry =
+    q in CHORD_CATALOG ? CHORD_CATALOG[q as ChordQuality] :
+    q in SCALE_CATALOG ? SCALE_CATALOG[q as ScaleMode] :
+    q in INTERVAL_CATALOG ? INTERVAL_CATALOG[q as IntervalGroup] : null
+  return entry?.intervals.map((iv) => Interval.semitones(iv) ?? 0) ?? []
+})
+
 const puzzleTitle = computed(() => {
   if (session.value.phase !== 'playing') return ''
   return formatPuzzleTitle(session.value.puzzle.diagonalNote, session.value.puzzle.quality)
@@ -145,6 +162,7 @@ function submit() {
         :active-cell="activeCell ?? undefined"
         :show-degree-labels="showDegreeLabels"
         :degrees="session.puzzle.degrees"
+        :interval-semitones="puzzleIntervalSemitones"
         :guidance-level="guidanceLevel"
         :revealed-hints="revealedHints"
         :guided-answers="guidedAnswers"

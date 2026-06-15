@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { MatrixCell } from '@/music/matrix'
 import type { AnswerResult } from '@/music/scoring'
 import { useAudio } from '@/composables/useAudio'
+import { Note } from '@/music/tonal'
 
 const { playNote } = useAudio()
 
@@ -17,6 +18,7 @@ const props = defineProps<{
   guidanceLevel?: 'full' | 'hint' | 'none'
   revealedHints?: string[]
   guidedAnswers?: string[][]
+  intervalSemitones?: number[]
 }>()
 
 const emit = defineEmits<{
@@ -53,14 +55,27 @@ function isActive(cell: MatrixCell): boolean {
   return props.activeCell?.row === cell.row && props.activeCell?.col === cell.col
 }
 
+function noteForColumnPlayback(cell: MatrixCell): string {
+  if (!cell.note || !props.intervalSemitones) return cell.note
+  const givenRow = cell.col // diagonal: given is always at row === col
+  const givenCell = props.cells[givenRow]?.[cell.col]
+  if (!givenCell?.note) return cell.note
+  const givenMidi = Note.midi(`${givenCell.note}4`) ?? 60
+  const semDiff = (props.intervalSemitones[cell.row] ?? 0) - (props.intervalSemitones[givenRow] ?? 0)
+  const targetMidi = givenMidi + semDiff
+  const chroma = Note.get(cell.note).chroma
+  const octave = Math.round((targetMidi - chroma) / 12) - 1
+  return `${cell.note}${octave}`
+}
+
 function handleClick(cell: MatrixCell) {
   if (props.mode !== 'input') return
   if (cell.isGiven) {
-    if (cell.note) playNote(cell.note)
+    if (cell.note) playNote(noteForColumnPlayback(cell))
     return
   }
   emit('cell-click', cell.row, cell.col)
-  if (cell.note) playNote(cell.note)
+  if (cell.note) playNote(noteForColumnPlayback(cell))
 }
 
 function ghostNoteFor(cell: MatrixCell): string | undefined {
