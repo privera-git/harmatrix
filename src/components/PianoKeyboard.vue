@@ -88,6 +88,8 @@ const BLACK_KEYS = [
 }
 
 .white-key {
+  position: relative;
+  z-index: 0;
   width: v-bind('WHITE_KEY_WIDTH + "px"');
   height: 80px;
   border: 1px solid #aaa;
@@ -125,9 +127,4 @@ const BLACK_KEYS = [
   background: #0066cc;
 }
 
-.key.inactive {
-  pointer-events: none;
-  cursor: default;
-  opacity: 0.4;
-}
 </style>
