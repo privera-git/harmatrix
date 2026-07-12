@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { FEATURES } from '@/config/features'
-import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
 import { formatPuzzleTitle } from '@/music/display'
 import { CHORD_CATALOG } from '@/music/data/chords'
 import type { ChordQuality } from '@/music/data/chords'
@@ -14,6 +13,7 @@ import { INTERVAL_CATALOG } from '@/music/data/intervals'
 import type { IntervalGroup } from '@/music/data/intervals'
 import { Interval } from '@/music/tonal'
 import MatrixGrid from '@/components/MatrixGrid.vue'
+import SubStageProgressBar from '@/components/SubStageProgressBar.vue'
 import NotePicker from '@/components/NotePicker.vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import TheoryModal from '@/components/TheoryModal.vue'
@@ -25,9 +25,11 @@ const { playJingle } = useAudio()
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
 const { session } = storeToRefs(gameStore)
-const { state: progressState } = storeToRefs(progressStore)
 
-const perfectStreak = computed(() => progressState.value.currentSubStageSession.perfectStreak)
+const progressRatio = computed(() => {
+  if (session.value.phase !== 'playing' || session.value.isFreePlay) return 0
+  return progressStore.progressRatio(session.value.puzzle.quality)
+})
 const guidanceLevel = computed(() =>
   session.value.phase === 'playing' ? session.value.guidanceLevel : 'none',
 )
@@ -141,13 +143,16 @@ function submit() {
 <template>
   <div v-if="session.phase === 'playing'" class="playing-view">
     <header class="playing-header">
-      <span class="puzzle-label">{{ puzzleTitle }}</span>
-      <button
-        v-if="FEATURES.THEORY_MODAL"
-        class="info-btn"
-        @click="showTheoryModal = true"
-      >ℹ</button>
-      <button class="abandon-btn" @click="abandon">Abandon</button>
+      <div class="playing-header__top">
+        <span class="puzzle-label">{{ puzzleTitle }}</span>
+        <button
+          v-if="FEATURES.THEORY_MODAL"
+          class="info-btn"
+          @click="showTheoryModal = true"
+        >ℹ</button>
+        <button class="abandon-btn" @click="abandon">Abandon</button>
+      </div>
+      <SubStageProgressBar v-if="!session.isFreePlay" :ratio="progressRatio" />
     </header>
     <TheoryModal
       v-if="FEATURES.THEORY_MODAL && showTheoryModal"
@@ -170,10 +175,8 @@ function submit() {
         @reveal-hint="gameStore.revealHint"
       />
 
-      <div class="progress-indicator">
-        <span>({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
+      <div v-if="guidanceLevel === 'hint'" class="progress-indicator">
         <button
-          v-if="guidanceLevel === 'hint'"
           class="hint-action-btn"
           :disabled="!canRevealHint"
           @click="revealActiveHint"
@@ -201,10 +204,16 @@ function submit() {
 
 .playing-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 1rem 0;
   border-bottom: 1px solid #ccc;
+}
+
+.playing-header__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .puzzle-label {

@@ -110,7 +110,7 @@ describe('CompletedView', () => {
       completeGame()
       mountView()
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith('major', expect.any(Array))
+      expect(spy).toHaveBeenCalledWith('major', expect.any(Array), expect.any(Object))
     })
 
     it('calls updateStreak once on mount', () => {
@@ -154,16 +154,16 @@ describe('CompletedView', () => {
       expect(wrapper.find('.score-total').text()).toContain('Score:')
     })
 
-    it('hides the streak indicator in free play mode', () => {
+    it('hides the progress bar in free play mode', () => {
       completeGame(DEFAULT_OPTIONS, true)
       const wrapper = mountView()
-      expect(wrapper.find('.score-streak').exists()).toBe(false)
+      expect(wrapper.find('[role="progressbar"]').exists()).toBe(false)
     })
 
-    it('shows the streak indicator in learn mode', () => {
+    it('shows the progress bar in learn mode', () => {
       completeGame(DEFAULT_OPTIONS, false)
       const wrapper = mountView()
-      expect(wrapper.find('.score-streak').exists()).toBe(true)
+      expect(wrapper.find('[role="progressbar"]').exists()).toBe(true)
     })
 
     it('Play Again forwards isFreePlay: true', async () => {

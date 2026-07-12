@@ -1,9 +1,11 @@
 import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { CURRICULUM, SUB_STAGE_SESSION_SIZE, INTRO_STAGE } from '@/config/game'
+import { CURRICULUM, SUB_STAGE_SESSION_SIZE, PROGRESSION_MULTIPLIERS, INTRO_STAGE } from '@/config/game'
 import { randomDiagonalNote } from '@/music/note'
 import type { DiagonalPool } from '@/music/note'
-import type { AnswerResult } from '@/music/scoring'
+import { puzzleSize } from '@/music/matrix'
+import { scoreCell } from '@/music/scoring'
+import type { AnswerResult, ScoringOptions } from '@/music/scoring'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
 import type { IntervalGroup } from '@/music/data/intervals'
@@ -13,10 +15,6 @@ type Quality = ChordQuality | ScaleMode | IntervalGroup
 interface LearningPosition {
   stage: number
   subStage: number
-}
-
-interface SubStageSession {
-  perfectStreak: number
 }
 
 interface QualityStats {
@@ -29,7 +27,7 @@ interface QualityStats {
 interface ProgressState {
   storageVersion: number
   learning: LearningPosition
-  currentSubStageSession: SubStageSession
+  accumulatedScore: Partial<Record<Quality, number>>
   unlockedContent: Array<Quality>
   stats: Partial<Record<Quality, QualityStats>>
   sessionsPlayed: Partial<Record<Quality, number>>
@@ -56,9 +54,9 @@ const STORAGE_KEY = 'harmatrix:progress'
 
 function makeDefaultState(): ProgressState {
   return {
-    storageVersion: 2,
+    storageVersion: 3,
     learning: { stage: 1, subStage: 1 },
-    currentSubStageSession: { perfectStreak: 0 },
+    accumulatedScore: {},
     unlockedContent: [],
     stats: {},
     sessionsPlayed: {},
@@ -76,14 +74,15 @@ function loadState(): ProgressState {
     if (!raw) return makeDefaultState()
     const persisted = JSON.parse(raw) as Partial<ProgressState>
     const merged: ProgressState = { ...makeDefaultState(), ...persisted }
-    // Migrate from block-session model (puzzlesPlayed/perfectPuzzles → perfectStreak)
-    if (!('perfectStreak' in (merged.currentSubStageSession ?? {}))) {
-      merged.currentSubStageSession = { perfectStreak: 0 }
-    }
     // storageVersion 1→2: Stage 0 (Interval Basics) prepended — shift existing stage by 1
     if ((merged.storageVersion ?? 1) < 2) {
       merged.learning = { stage: merged.learning.stage + 1, subStage: merged.learning.subStage }
       merged.storageVersion = 2
+    }
+    // storageVersion 2→3: perfectStreak model replaced by accumulatedScore (GDR-001)
+    if (merged.storageVersion < 3) {
+      merged.accumulatedScore = {}
+      merged.storageVersion = 3
     }
     return merged
   } catch {
@@ -113,9 +112,20 @@ export const useProgressStore = defineStore('progress', () => {
     { deep: true, flush: 'sync' },
   )
 
+  function progressionMultiplier(options: ScoringOptions): number {
+    if (options.noDegreeLabels && options.noPianoKeyboard) return PROGRESSION_MULTIPLIERS.hardMode
+    if (options.noDegreeLabels || options.noPianoKeyboard) return PROGRESSION_MULTIPLIERS.oneToggle
+    return PROGRESSION_MULTIPLIERS.noHelp
+  }
+
+  function targetScoreFor(numCells: number): number {
+    return SUB_STAGE_SESSION_SIZE * numCells * 3
+  }
+
   function recordSessionResults(
     quality: Quality,
     results: AnswerResult[],
+    options: ScoringOptions,
   ): void {
     const existing = state.value.stats[quality] ?? { correct: 0, enharmonic: 0, wrong: 0, total: 0 }
     state.value.stats[quality] = {
@@ -125,15 +135,14 @@ export const useProgressStore = defineStore('progress', () => {
       total: existing.total + results.length,
     }
 
-    const isPerfect = results.length > 0 && results.every((r) => r === 'correct')
-    if (isPerfect) {
-      state.value.currentSubStageSession.perfectStreak++
-      if (state.value.currentSubStageSession.perfectStreak === SUB_STAGE_SESSION_SIZE) {
-        state.value.currentSubStageSession = { perfectStreak: 0 }
-        advanceLearning()
-      }
-    } else {
-      state.value.currentSubStageSession = { perfectStreak: 0 }
+    const rawScore = results.reduce((sum, r) => sum + scoreCell(r), 0)
+    const contribution = rawScore * progressionMultiplier(options)
+    const accumulated = (state.value.accumulatedScore[quality] ?? 0) + contribution
+    state.value.accumulatedScore[quality] = accumulated
+
+    if (accumulated >= targetScoreFor(results.length)) {
+      state.value.accumulatedScore[quality] = 0
+      advanceLearning()
     }
   }
 
@@ -174,9 +183,9 @@ export const useProgressStore = defineStore('progress', () => {
     state.value.lastPracticeDate = today
   }
 
-  function poolForStreak(streak: number): DiagonalPool {
-    if (streak <= 4) return 'natural'
-    if (streak <= 7) return 'full'
+  function poolForProgress(ratio: number): DiagonalPool {
+    if (ratio <= 0.4) return 'natural'
+    if (ratio <= 0.7) return 'full'
     return 'altered'
   }
 
@@ -189,7 +198,7 @@ export const useProgressStore = defineStore('progress', () => {
     } else if ((state.value.sessionsPlayed[quality] ?? 0) === 0) {
       note = 'C'
     } else {
-      const pool = poolForStreak(state.value.currentSubStageSession.perfectStreak)
+      const pool = poolForProgress(progressRatio(quality))
       note = randomDiagonalNote(history, pool)
     }
 
@@ -197,11 +206,19 @@ export const useProgressStore = defineStore('progress', () => {
     return note
   }
 
+  function progressRatio(quality: Quality): number {
+    const numCells = puzzleSize(quality) * (puzzleSize(quality) - 1)
+    return (state.value.accumulatedScore[quality] ?? 0) / targetScoreFor(numCells)
+  }
+
   function jumpToPosition(stage: number, subStage: number): void {
     const stageQualities = CURRICULUM[stage - 1]
     const valid = stageQualities !== undefined && subStage >= 1 && subStage <= stageQualities.length
     state.value.learning = valid ? { stage, subStage } : { stage: 1, subStage: 1 }
-    state.value.currentSubStageSession = { perfectStreak: 0 }
+    const destinationQuality = CURRICULUM[state.value.learning.stage - 1]?.[state.value.learning.subStage - 1]
+    if (destinationQuality !== undefined) {
+      state.value.accumulatedScore[destinationQuality] = 0
+    }
   }
 
   const freePlayAccess = computed<FreePlayStageAccess[]>(() => {
@@ -241,7 +258,10 @@ export const useProgressStore = defineStore('progress', () => {
 
   function skipToTriads(): void {
     state.value.learning = { stage: INTRO_STAGE + 1, subStage: 1 }
-    state.value.currentSubStageSession = { perfectStreak: 0 }
+    const destinationQuality = CURRICULUM[state.value.learning.stage - 1]?.[0]
+    if (destinationQuality !== undefined) {
+      state.value.accumulatedScore[destinationQuality] = 0
+    }
   }
 
   function setLastFreePlayStage(stage: number): void {
@@ -262,6 +282,7 @@ export const useProgressStore = defineStore('progress', () => {
     recordSessionResults,
     incrementSessionsPlayed,
     guidanceLevelFor,
+    progressRatio,
     advanceLearning,
     unlockContent,
     updateStreak,

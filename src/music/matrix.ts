@@ -50,16 +50,24 @@ function bestEnharmonicReplacement(note: string): string | null {
   return candidates.find((e) => Note.get(e).alt === 0) ?? candidates[0]!
 }
 
+function intervalsFor(quality: ChordQuality | ScaleMode | IntervalGroup): string[] {
+  return quality in CHORD_CATALOG
+    ? CHORD_CATALOG[quality as ChordQuality].intervals
+    : quality in INTERVAL_CATALOG
+      ? INTERVAL_CATALOG[quality as IntervalGroup].intervals
+      : SCALE_CATALOG[quality as ScaleMode].intervals
+}
+
+// Number of cells per row/column in the matrix for this quality (the diagonal cells are given).
+export function puzzleSize(quality: ChordQuality | ScaleMode | IntervalGroup): number {
+  return intervalsFor(quality).length
+}
+
 export function generateMatrix(
   diagonalNote: string,
   quality: ChordQuality | ScaleMode | IntervalGroup,
 ): MatrixPuzzle | null {
-  const intervals =
-    quality in CHORD_CATALOG
-      ? CHORD_CATALOG[quality as ChordQuality].intervals
-      : quality in INTERVAL_CATALOG
-        ? INTERVAL_CATALOG[quality as IntervalGroup].intervals
-        : SCALE_CATALOG[quality as ScaleMode].intervals
+  const intervals = intervalsFor(quality)
 
   const size = intervals.length
   const degrees = intervals.map(intervalToDegreeLabel)
