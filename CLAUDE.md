@@ -60,5 +60,13 @@ Rules:
 - Every PR must pass `type-check`, `lint`, and `test:unit` before merge
 - Use feature flags (`src/config/features.ts`) for incomplete work merged early
 
+## Issue Status Tracking
+
+- When starting work on a GitHub issue, set its status to **"In Progress"**.
+- Once implementation is done and coding is complete — the point where the user starts manually
+  testing the change — set it to **"In Review"**.
+- Tracking mechanism (labels vs. GitHub Projects board) is still to be decided — see memory
+  `project_issue_status_workflow` for the current blocker before implementing this.
+
 @best-practices.md
 @claude-behavior.md
