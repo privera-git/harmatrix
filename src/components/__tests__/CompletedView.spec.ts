@@ -166,7 +166,7 @@ describe('CompletedView', () => {
       expect(wrapper.find('[role="progressbar"]').exists()).toBe(true)
     })
 
-    it('Play Again forwards isFreePlay: true', async () => {
+    it('Play Next forwards isFreePlay: true', async () => {
       const game = completeGame(DEFAULT_OPTIONS, true)
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
@@ -176,14 +176,14 @@ describe('CompletedView', () => {
   })
 
   describe('actions', () => {
-    it('transitions to playing on Play Again', async () => {
+    it('transitions to playing on Play Next', async () => {
       const game = completeGame()
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
       expect(game.session.phase).toBe('playing')
     })
 
-    it('Play Again preserves quality', async () => {
+    it('Play Next preserves quality', async () => {
       const game = completeGame()
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
@@ -191,7 +191,7 @@ describe('CompletedView', () => {
       expect(game.session.puzzle.quality).toBe('major')
     })
 
-    it('Play Again preserves options', async () => {
+    it('Play Next preserves options', async () => {
       const game = completeGame({ noDegreeLabels: true, noPianoKeyboard: false })
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
