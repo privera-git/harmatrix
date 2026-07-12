@@ -4,7 +4,6 @@ import { setActivePinia, createPinia } from 'pinia'
 import IdleView from '@/components/IdleView.vue'
 import { useProgressStore } from '@/stores/progress'
 import { useGameStore } from '@/stores/game'
-import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
 
 function freshStorage() {
   const store: Record<string, string> = {}
@@ -44,9 +43,9 @@ describe('IdleView', () => {
       expect(wrapper.find('h1').text()).toBe('HARMATRIX')
     })
 
-    it('renders the session size denominator', () => {
+    it('renders the sub-stage progress bar', () => {
       const wrapper = mountView()
-      expect(wrapper.text()).toContain(`/ ${SUB_STAGE_SESSION_SIZE}`)
+      expect(wrapper.find('[role="progressbar"]').exists()).toBe(true)
     })
 
     it('renders two difficulty checkboxes', () => {
@@ -80,11 +79,13 @@ describe('IdleView', () => {
       expect(wrapper.text()).toContain('thirds')
     })
 
-    it('shows perfect streak from store', async () => {
+    it('reflects accumulatedScore progress in the progress bar', async () => {
       const progress = useProgressStore()
-      progress.state.currentSubStageSession.perfectStreak = 4
+      // Default position is stage 1, subStage 1 → 'seconds' (3 intervals → 6 non-given cells,
+      // targetScore = 10 * 6 * 3 = 180); 90 is 50% of target.
+      progress.state.accumulatedScore['seconds'] = 90
       const wrapper = mountView()
-      expect(wrapper.text()).toContain('4 /')
+      expect(wrapper.get('[role="progressbar"]').attributes('aria-valuenow')).toBe('50')
     })
   })
 

@@ -4,6 +4,13 @@ import type { IntervalGroup } from '@/music/data/intervals'
 
 export const SUB_STAGE_SESSION_SIZE = 10
 
+// Progression-speed multipliers, decoupled from the score-display multipliers in music/scoring.ts.
+export const PROGRESSION_MULTIPLIERS = {
+  noHelp: 1.0,
+  oneToggle: 1.2,
+  hardMode: 1.5,
+} as const
+
 // 1-indexed stage number of the intro stage (Interval Basics); always accessible in Free Play.
 export const INTRO_STAGE = 1
 

@@ -3,9 +3,10 @@ import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
-import { CURRICULUM, SUB_STAGE_SESSION_SIZE, STAGE_NAMES, INTRO_STAGE } from '@/config/game'
+import { CURRICULUM, STAGE_NAMES, INTRO_STAGE } from '@/config/game'
 import { FEATURES } from '@/config/features'
 import FreePlayPicker from '@/components/FreePlayPicker.vue'
+import SubStageProgressBar from '@/components/SubStageProgressBar.vue'
 import TheoryModal from '@/components/TheoryModal.vue'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
@@ -20,7 +21,6 @@ const noPianoKeyboard = ref(false)
 const showTheoryModal = ref(false)
 
 const learning = computed(() => state.value.learning)
-const perfectStreak = computed(() => state.value.currentSubStageSession.perfectStreak)
 const stageName = computed(() => STAGE_NAMES[learning.value.stage - 1] ?? `Stage ${learning.value.stage}`)
 const streak = computed(() => state.value.practiceStreak)
 const idleMode = computed(() => state.value.idleMode)
@@ -33,6 +33,8 @@ const quality = computed(() => {
   const stageQualities = CURRICULUM[learning.value.stage - 1]
   return stageQualities?.[learning.value.subStage - 1] ?? 'major'
 })
+
+const progressRatio = computed(() => progressStore.progressRatio(quality.value))
 
 function setMode(mode: 'learn' | 'freePlay'): void {
   progressStore.setIdleMode(mode)
@@ -105,8 +107,8 @@ function onStageOpen(stageIndex: number): void {
             class="info-btn"
             @click="showTheoryModal = true"
           >ℹ</button>
-          <span class="quality-progress">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
         </div>
+        <SubStageProgressBar :ratio="progressRatio" />
         <TheoryModal
           v-if="FEATURES.THEORY_MODAL && showTheoryModal"
           :quality="quality"
@@ -258,14 +260,6 @@ function onStageOpen(stageIndex: number): void {
 .info-btn:hover {
   border-color: #0066cc;
   color: #0066cc;
-}
-
-.quality-progress {
-  font-size: 0.85rem;
-  font-weight: 400;
-  color: #666;
-  text-transform: none;
-  margin-left: auto;
 }
 
 .difficulty-section {

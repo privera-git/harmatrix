@@ -4,17 +4,19 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { sessionMultiplier } from '@/music/scoring'
-import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
 import { formatPuzzleTitle } from '@/music/display'
 import MatrixGrid from '@/components/MatrixGrid.vue'
+import SubStageProgressBar from '@/components/SubStageProgressBar.vue'
 import type { MatrixCell } from '@/music/matrix'
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
 const { session } = storeToRefs(gameStore)
-const { state: progressState } = storeToRefs(progressStore)
 
-const perfectStreak = computed(() => progressState.value.currentSubStageSession.perfectStreak)
+const progressRatio = computed(() => {
+  if (session.value.phase !== 'completed') return 0
+  return progressStore.progressRatio(session.value.puzzle.quality)
+})
 const isFreePlay = computed(
   () => session.value.phase === 'completed' && session.value.isFreePlay,
 )
@@ -62,13 +64,13 @@ const multiplier = computed(() => {
 
 onMounted(() => {
   if (session.value.phase !== 'completed') return
-  const { puzzle, results, isFreePlay } = session.value
+  const { puzzle, results, options, isFreePlay } = session.value
   progressStore.incrementSessionsPlayed(puzzle.quality)
   if (isFreePlay) return
   const flatResults = puzzle.cells.flatMap((row, r) =>
     row.flatMap((cell, c) => (cell.isGiven ? [] : [results[r]?.[c] ?? 'wrong'])),
   )
-  progressStore.recordSessionResults(puzzle.quality, flatResults)
+  progressStore.recordSessionResults(puzzle.quality, flatResults, options)
   progressStore.updateStreak()
 })
 
@@ -93,7 +95,6 @@ function backToMenu() {
       <div class="score-section">
         <div class="score-total">
           <span>Score: {{ session.score }}</span>
-          <span v-if="!isFreePlay" class="score-streak">({{ perfectStreak }} / {{ SUB_STAGE_SESSION_SIZE }})</span>
         </div>
         <div class="score-breakdown">
           <span class="breakdown-correct">✓ {{ breakdown.correct }}</span>
@@ -101,6 +102,7 @@ function backToMenu() {
           <span class="breakdown-wrong">✗ {{ breakdown.wrong }}</span>
           <span>× {{ multiplier }}</span>
         </div>
+        <SubStageProgressBar v-if="!isFreePlay" :ratio="progressRatio" />
       </div>
 
       <MatrixGrid
@@ -161,12 +163,6 @@ function backToMenu() {
   align-items: baseline;
   font-size: 1.1rem;
   font-weight: 600;
-}
-
-.score-streak {
-  font-size: 0.85rem;
-  font-weight: 400;
-  color: #666;
 }
 
 .score-breakdown {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useProgressStore } from '@/stores/progress'
-import { SUB_STAGE_SESSION_SIZE } from '@/config/game'
+import type { ScoringOptions } from '@/music/scoring'
 
 function freshStorage() {
   const store: Record<string, string> = {}
@@ -31,8 +31,13 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+// 'major' is a 3x3 matrix (3 intervals) → 6 non-given cells, MAX_CELL_SCORE 3 → 18 pts/perfect session.
+// targetScore = SUB_STAGE_SESSION_SIZE(10) * numCells(6) * 3 = 180, so 10 perfect sessions advance.
 const PERFECT = Array<'correct'>(6).fill('correct')
 const IMPERFECT: ('correct' | 'wrong')[] = [...Array<'correct'>(5).fill('correct'), 'wrong']
+const PERFECT_SESSION_SCORE = 18
+const TARGET_SCORE = 180
+const NO_HELP: ScoringOptions = { noDegreeLabels: false, noPianoKeyboard: false }
 
 describe('initial state', () => {
   it('starts at stage 1, sub-stage 1 (Interval Basics)', () => {
@@ -70,57 +75,85 @@ describe('initial state', () => {
 describe('recordSessionResults', () => {
   it('accumulates stats for a quality', () => {
     const store = useProgressStore()
-    store.recordSessionResults('major', ['correct', 'enharmonic', 'wrong'])
+    store.recordSessionResults('major', ['correct', 'enharmonic', 'wrong'], NO_HELP)
     expect(store.state.stats['major']).toEqual({ correct: 1, enharmonic: 1, wrong: 1, total: 3 })
   })
 
   it('accumulates stats across multiple calls', () => {
     const store = useProgressStore()
-    store.recordSessionResults('major', ['correct', 'correct'])
-    store.recordSessionResults('major', ['wrong'])
+    store.recordSessionResults('major', ['correct', 'correct'], NO_HELP)
+    store.recordSessionResults('major', ['wrong'], NO_HELP)
     expect(store.state.stats['major']).toEqual({ correct: 2, enharmonic: 0, wrong: 1, total: 3 })
   })
 
-  it('increments perfectStreak on each consecutive perfect puzzle', () => {
+  it('accumulates score on each perfect session', () => {
     const store = useProgressStore()
-    store.recordSessionResults('major', PERFECT)
-    expect(store.state.currentSubStageSession.perfectStreak).toBe(1)
-    store.recordSessionResults('major', PERFECT)
-    expect(store.state.currentSubStageSession.perfectStreak).toBe(2)
+    store.recordSessionResults('major', PERFECT, NO_HELP)
+    expect(store.state.accumulatedScore['major']).toBe(PERFECT_SESSION_SCORE)
+    store.recordSessionResults('major', PERFECT, NO_HELP)
+    expect(store.state.accumulatedScore['major']).toBe(PERFECT_SESSION_SCORE * 2)
   })
 
-  it('resets perfectStreak to 0 on imperfect puzzle', () => {
+  it('does not lose accumulated score on an imperfect session — mistakes slow progress, never erase it', () => {
     const store = useProgressStore()
-    store.recordSessionResults('major', PERFECT)
-    store.recordSessionResults('major', IMPERFECT)
-    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
+    store.recordSessionResults('major', PERFECT, NO_HELP)
+    store.recordSessionResults('major', IMPERFECT, NO_HELP)
+    // IMPERFECT = 5 correct + 1 wrong = 5*3 = 15 pts, added on top of the perfect session's 18
+    expect(store.state.accumulatedScore['major']).toBe(PERFECT_SESSION_SCORE + 15)
   })
 
-  it('advances sub-stage after N perfect puzzles', () => {
+  it('applies the hard-mode progression multiplier to session score', () => {
     const store = useProgressStore()
-    for (let i = 0; i < SUB_STAGE_SESSION_SIZE; i++) {
-      store.recordSessionResults('major', PERFECT)
+    store.recordSessionResults('major', PERFECT, { noDegreeLabels: true, noPianoKeyboard: true })
+    expect(store.state.accumulatedScore['major']).toBe(PERFECT_SESSION_SCORE * 1.5)
+  })
+
+  it('advances sub-stage once accumulatedScore reaches targetScore', () => {
+    const store = useProgressStore()
+    const sessionsToTarget = TARGET_SCORE / PERFECT_SESSION_SCORE
+    for (let i = 0; i < sessionsToTarget; i++) {
+      store.recordSessionResults('major', PERFECT, NO_HELP)
     }
     expect(store.state.learning.subStage).toBe(2)
   })
 
-  it('any imperfect puzzle resets streak to 0 and does not advance', () => {
+  it('a lower-scoring session slows progress but does not block advancing eventually', () => {
     const store = useProgressStore()
-    for (let i = 0; i < SUB_STAGE_SESSION_SIZE - 1; i++) {
-      store.recordSessionResults('major', PERFECT)
+    for (let i = 0; i < 11; i++) {
+      store.recordSessionResults('major', IMPERFECT, NO_HELP)
     }
-    store.recordSessionResults('major', IMPERFECT)
-    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
+    // IMPERFECT contributes 15 pts/session; 11 * 15 = 165 < 180, one more session needed to cross it
     expect(store.state.learning.subStage).toBe(1)
+    store.recordSessionResults('major', IMPERFECT, NO_HELP)
+    expect(store.state.learning.subStage).toBe(2)
   })
 
-  it('streak resets to 0 after advancing and must reach N again', () => {
+  it('accumulatedScore resets to 0 after advancing and must reach targetScore again', () => {
     const store = useProgressStore()
-    for (let i = 0; i < SUB_STAGE_SESSION_SIZE; i++) {
-      store.recordSessionResults('major', PERFECT)
+    const sessionsToTarget = TARGET_SCORE / PERFECT_SESSION_SCORE
+    for (let i = 0; i < sessionsToTarget; i++) {
+      store.recordSessionResults('major', PERFECT, NO_HELP)
     }
     expect(store.state.learning.subStage).toBe(2)
-    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
+    expect(store.state.accumulatedScore['major']).toBe(0)
+  })
+
+  it('does not let stale accumulatedScore from an earlier stage auto-complete a later substage reusing the same quality', () => {
+    const store = useProgressStore()
+    // 'ionian' appears in both Stage 5 (Common Scales) and Stage 7 (Major Scale Modes).
+    // recordSessionResults derives targetScore from results.length, not the real puzzle size,
+    // so a 6-cell PERFECT session is used here purely for test simplicity — one perfect session
+    // always contributes 1/10 of whatever target that session implies, regardless of quality.
+    store.state.learning = { stage: 5, subStage: 1 }
+    for (let i = 0; i < TARGET_SCORE / PERFECT_SESSION_SCORE; i++) {
+      store.recordSessionResults('ionian', PERFECT, NO_HELP)
+    }
+    expect(store.state.accumulatedScore['ionian']).toBe(0)
+
+    store.state.learning = { stage: 7, subStage: 1 }
+    expect(store.state.accumulatedScore['ionian']).toBe(0)
+    store.recordSessionResults('ionian', PERFECT, NO_HELP)
+    expect(store.state.learning.subStage).toBe(1)
   })
 })
 
@@ -272,11 +305,11 @@ describe('skipToTriads', () => {
     expect(store.state.learning).toEqual({ stage: 2, subStage: 1 })
   })
 
-  it('resets perfectStreak', () => {
+  it('resets accumulatedScore for the destination quality (Triads sub-stage 1 is major)', () => {
     const store = useProgressStore()
-    store.recordSessionResults('major', PERFECT)
+    store.recordSessionResults('major', PERFECT, NO_HELP)
     store.skipToTriads()
-    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
+    expect(store.state.accumulatedScore['major']).toBe(0)
   })
 })
 
@@ -341,11 +374,12 @@ describe('jumpToPosition', () => {
     expect(store.state.learning).toEqual({ stage: 2, subStage: 4 })
   })
 
-  it('resets perfectStreak to 0 on jump', () => {
+  it('resets accumulatedScore for the destination quality on jump', () => {
     const store = useProgressStore()
-    store.recordSessionResults('major', PERFECT)
+    // stage 1, sub-stage 2 = 'thirds' in CURRICULUM
+    store.recordSessionResults('thirds', PERFECT, NO_HELP)
     store.jumpToPosition(1, 2)
-    expect(store.state.currentSubStageSession.perfectStreak).toBe(0)
+    expect(store.state.accumulatedScore['thirds']).toBe(0)
   })
 
   it('falls back to 1,1 when stage does not exist in curriculum', () => {
@@ -501,7 +535,7 @@ describe('persistence', () => {
   })
 
 
-  it('migrates storageVersion 1 data by incrementing stage by 1', () => {
+  it('migrates storageVersion 1 data by incrementing stage by 1, cascading through to the current version', () => {
     localStorage.setItem(
       'harmatrix:progress',
       JSON.stringify({ storageVersion: 1, learning: { stage: 2, subStage: 3 } }),
@@ -509,17 +543,34 @@ describe('persistence', () => {
     setActivePinia(createPinia())
     const store = useProgressStore()
     expect(store.state.learning).toEqual({ stage: 3, subStage: 3 })
-    expect(store.state.storageVersion).toBe(2)
+    expect(store.state.storageVersion).toBe(3)
   })
 
-  it('does not migrate data that already has storageVersion 2', () => {
+  it('migrates storageVersion 2 data (perfectStreak model) to accumulatedScore', () => {
     localStorage.setItem(
       'harmatrix:progress',
-      JSON.stringify({ storageVersion: 2, learning: { stage: 2, subStage: 3 } }),
+      JSON.stringify({
+        storageVersion: 2,
+        learning: { stage: 2, subStage: 3 },
+        currentSubStageSession: { perfectStreak: 4 },
+      }),
     )
     setActivePinia(createPinia())
     const store = useProgressStore()
     expect(store.state.learning).toEqual({ stage: 2, subStage: 3 })
+    expect(store.state.accumulatedScore).toEqual({})
+    expect(store.state.storageVersion).toBe(3)
+  })
+
+  it('does not migrate data that already has storageVersion 3', () => {
+    localStorage.setItem(
+      'harmatrix:progress',
+      JSON.stringify({ storageVersion: 3, learning: { stage: 2, subStage: 3 }, accumulatedScore: { major: 42 } }),
+    )
+    setActivePinia(createPinia())
+    const store = useProgressStore()
+    expect(store.state.learning).toEqual({ stage: 2, subStage: 3 })
+    expect(store.state.accumulatedScore).toEqual({ major: 42 })
   })
 })
 
@@ -530,18 +581,18 @@ describe('nextDiagonalNote', () => {
     expect(store.nextDiagonalNote('major', false)).toBe('C')
   })
 
-  it('returns C in learn mode regardless of streak when sessionsPlayed is 0', () => {
+  it('returns C in learn mode regardless of progress when sessionsPlayed is 0', () => {
     const store = useProgressStore()
-    store.state.currentSubStageSession.perfectStreak = 9
+    store.state.accumulatedScore['major'] = TARGET_SCORE * 0.9
     expect(store.nextDiagonalNote('major', false)).toBe('C')
   })
 
-  it('returns a natural note for streak 0-4 after first session', () => {
+  it('returns a natural note for progress ratio 0-40% after first session', () => {
     const store = useProgressStore()
     store.state.sessionsPlayed['major'] = 1
     const naturals = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
-    for (let streak = 0; streak <= 4; streak++) {
-      store.state.currentSubStageSession.perfectStreak = streak
+    for (const ratio of [0, 0.1, 0.2, 0.3, 0.4]) {
+      store.state.accumulatedScore['major'] = TARGET_SCORE * ratio
       store.state.diagonalNoteHistory = []
       for (let i = 0; i < 10; i++) {
         const note = store.nextDiagonalNote('major', false)
@@ -551,12 +602,28 @@ describe('nextDiagonalNote', () => {
     }
   })
 
-  it('returns an altered note for streak 8-9 after first session', () => {
+  it('returns any note (full pool) for progress ratio 40-70% after first session', () => {
+    const store = useProgressStore()
+    store.state.sessionsPlayed['major'] = 1
+    for (const ratio of [0.5, 0.6, 0.7]) {
+      store.state.accumulatedScore['major'] = TARGET_SCORE * ratio
+      store.state.diagonalNoteHistory = []
+      const notes = new Set(
+        Array.from({ length: 20 }, () => {
+          store.state.diagonalNoteHistory = []
+          return store.nextDiagonalNote('major', false)
+        }),
+      )
+      expect(notes.size).toBeGreaterThan(1)
+    }
+  })
+
+  it('returns an altered note for progress ratio 80-90% after first session', () => {
     const store = useProgressStore()
     store.state.sessionsPlayed['major'] = 1
     const naturals = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
-    for (const streak of [8, 9]) {
-      store.state.currentSubStageSession.perfectStreak = streak
+    for (const ratio of [0.8, 0.9]) {
+      store.state.accumulatedScore['major'] = TARGET_SCORE * ratio
       store.state.diagonalNoteHistory = []
       for (let i = 0; i < 10; i++) {
         const note = store.nextDiagonalNote('major', false)
@@ -566,10 +633,10 @@ describe('nextDiagonalNote', () => {
     }
   })
 
-  it('ignores streak rules in free play mode', () => {
+  it('ignores progress rules in free play mode', () => {
     const store = useProgressStore()
     store.state.sessionsPlayed['major'] = 0
-    store.state.currentSubStageSession.perfectStreak = 0
+    store.state.accumulatedScore['major'] = 0
     // Should not return C every time — free play uses full pool
     const notes = new Set(Array.from({ length: 40 }, () => {
       store.state.diagonalNoteHistory = []
