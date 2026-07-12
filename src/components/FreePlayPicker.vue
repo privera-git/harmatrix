@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { STAGE_NAMES } from '@/config/game'
-import { formatQualityLabel } from '@/music/display'
+import { formatQualityLabel, isMinorSymbolLabel } from '@/music/display'
 import type { FreePlayStageAccess } from '@/stores/progress'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
@@ -73,7 +73,10 @@ function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, acces
           v-for="(subStage, ssIndex) in stage.subStages"
           :key="ssIndex"
           class="sub-stage-btn"
-          :class="{ 'sub-stage-btn--locked': !subStage.accessible }"
+          :class="{
+            'sub-stage-btn--locked': !subStage.accessible,
+            'sub-stage-btn--symbol': isMinorSymbolLabel(subStage.quality),
+          }"
           :disabled="!subStage.accessible"
           @click="selectSubStage(subStage.quality, subStage.accessible)"
         >
@@ -160,6 +163,10 @@ function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, acces
 .sub-stage-btn--locked {
   opacity: 0.45;
   cursor: default;
+}
+
+.sub-stage-btn--symbol {
+  text-transform: none;
 }
 
 @media (prefers-color-scheme: dark) {

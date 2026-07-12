@@ -8,6 +8,7 @@ import { FEATURES } from '@/config/features'
 import FreePlayPicker from '@/components/FreePlayPicker.vue'
 import SubStageProgressBar from '@/components/SubStageProgressBar.vue'
 import TheoryModal from '@/components/TheoryModal.vue'
+import { formatQualityLabel, isMinorSymbolLabel } from '@/music/display'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
 import type { IntervalGroup } from '@/music/data/intervals'
@@ -100,8 +101,8 @@ function onStageOpen(stageIndex: number): void {
     <main class="idle-main">
       <template v-if="idleMode === 'learn'">
         <div class="learning-position">{{ stageName }}</div>
-        <div class="quality-label">
-          <span>Quality: {{ quality }}</span>
+        <div class="quality-label" :class="{ 'quality-label--symbol': isMinorSymbolLabel(quality) }">
+          <span>Quality: {{ formatQualityLabel(quality) }}</span>
           <button
             v-if="FEATURES.THEORY_MODAL"
             class="info-btn"
@@ -239,6 +240,10 @@ function onStageOpen(stageIndex: number): void {
   font-size: 1rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.quality-label--symbol {
+  text-transform: none;
 }
 
 .info-btn {

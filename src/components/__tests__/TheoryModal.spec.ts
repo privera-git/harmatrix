@@ -65,4 +65,14 @@ describe('TheoryModal', () => {
       '5th mode of the harmonic minor scale',
     )
   })
+
+  it('shows lowercase m7 title without capitalizing the minor symbol', () => {
+    const wrapper = mount(TheoryModal, { props: { quality: 'm7' } })
+    expect(wrapper.find('.modal-title').text()).toBe('m7')
+  })
+
+  it('shows lowercase mΔ7 title without capitalizing the minor symbol', () => {
+    const wrapper = mount(TheoryModal, { props: { quality: 'mMaj7' } })
+    expect(wrapper.find('.modal-title').text()).toBe('mΔ7')
+  })
 })

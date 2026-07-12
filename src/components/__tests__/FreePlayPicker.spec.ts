@@ -148,4 +148,35 @@ describe('FreePlayPicker', () => {
       expect(wrapper.emitted('play')).toBeUndefined()
     })
   })
+
+  describe('minor symbol casing', () => {
+    it('renders m7 text and disables capitalize transform for a minor tetrad sub-stage', async () => {
+      const access = makeAccess([
+        {
+          accessible: true,
+          subStages: [
+            { accessible: true, quality: 'm7' },
+            { accessible: true, quality: 'mMaj7' },
+          ],
+        },
+      ])
+      const wrapper = mount(FreePlayPicker, {
+        props: { freePlayAccess: access, initialStage: 0 },
+      })
+      await nextTick()
+      const buttons = wrapper.findAll('.sub-stage-btn')
+      expect(buttons[0]!.text()).toBe('m7')
+      expect(buttons[0]!.classes()).toContain('sub-stage-btn--symbol')
+      expect(buttons[1]!.text()).toBe('mΔ7')
+      expect(buttons[1]!.classes()).toContain('sub-stage-btn--symbol')
+    })
+
+    it('does not disable the capitalize transform for a triad sub-stage', async () => {
+      const wrapper = mount(FreePlayPicker, {
+        props: { freePlayAccess: ACCESS_STAGE0_PARTIAL, initialStage: 0 },
+      })
+      await nextTick()
+      expect(wrapper.findAll('.sub-stage-btn')[0]!.classes()).not.toContain('sub-stage-btn--symbol')
+    })
+  })
 })

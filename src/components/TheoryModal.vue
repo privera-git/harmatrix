@@ -8,7 +8,7 @@ import type { ScaleMode } from '@/music/data/scales'
 import { INTERVAL_CATALOG } from '@/music/data/intervals'
 import type { IntervalGroup } from '@/music/data/intervals'
 import { SCALE_DESCRIPTIONS, MODE_PARENT } from '@/music/data/theory'
-import { formatQualityLabel } from '@/music/display'
+import { formatQualityLabel, isMinorSymbolLabel } from '@/music/display'
 import { intervalToDegreeLabel } from '@/music/matrix'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
 
@@ -58,7 +58,10 @@ const catalogEntry = computed(() => {
 
 const intervals = computed<string[]>(() => catalogEntry.value?.intervals ?? [])
 
-const title = computed(() => capitalize(formatQualityLabel(props.quality)))
+const title = computed(() => {
+  const label = formatQualityLabel(props.quality)
+  return isMinorSymbolLabel(props.quality) ? label : capitalize(label)
+})
 
 const subtitle = computed<string | null>(() => {
   const meta = MODE_PARENT[props.quality as ScaleMode]

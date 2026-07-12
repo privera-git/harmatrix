@@ -79,6 +79,25 @@ describe('IdleView', () => {
       expect(wrapper.text()).toContain('thirds')
     })
 
+    it('shows lowercase m7 label and disables the capitalize transform', async () => {
+      const progress = useProgressStore()
+      // Stage 3 (Tetrads), subStage 3 → 'm7'
+      progress.state.learning = { stage: 3, subStage: 3 }
+      const wrapper = mountView()
+      expect(wrapper.find('.quality-label').text()).toContain('m7')
+      expect(wrapper.find('.quality-label').classes()).toContain('quality-label--symbol')
+    })
+
+    it('shows the formatted mΔ7 label instead of leaking the raw mMaj7 key', async () => {
+      const progress = useProgressStore()
+      // Stage 3 (Tetrads), subStage 4 → 'mMaj7'
+      progress.state.learning = { stage: 3, subStage: 4 }
+      const wrapper = mountView()
+      expect(wrapper.find('.quality-label').text()).toContain('mΔ7')
+      expect(wrapper.find('.quality-label').text()).not.toContain('mMaj7')
+      expect(wrapper.find('.quality-label').classes()).toContain('quality-label--symbol')
+    })
+
     it('reflects accumulatedScore progress in the progress bar', async () => {
       const progress = useProgressStore()
       // Default position is stage 1, subStage 1 → 'seconds' (3 intervals → 6 non-given cells,

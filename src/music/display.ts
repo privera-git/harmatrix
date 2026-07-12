@@ -40,6 +40,13 @@ const SCALE_LABEL: Record<ScaleMode, string> = {
   halfWholeDim: 'half-whole diminished scale',
 }
 
+export function isMinorSymbolLabel(quality: ChordQuality | ScaleMode | IntervalGroup): boolean {
+  if (!(quality in CHORD_CATALOG)) return false
+  const q = quality as ChordQuality
+  if (TRIAD_LABEL[q]) return false
+  return CHORD_CATALOG[q].symbol.startsWith('m')
+}
+
 export function formatQualityLabel(quality: ChordQuality | ScaleMode | IntervalGroup): string {
   if (quality in CHORD_CATALOG) {
     const def = CHORD_CATALOG[quality as ChordQuality]
