@@ -140,4 +140,36 @@ describe('NotePicker', () => {
       }
     })
   })
+
+  describe('note-click emit', () => {
+    it('emits note-click alongside update:modelValue when selecting a letter', async () => {
+      const wrapper = mount(NotePicker, {
+        props: { modelValue: null, disabled: false, 'onUpdate:modelValue': () => {} },
+      })
+      await wrapper.findAll('.letters-row .picker-btn')[2]!.trigger('click') // E
+      expect(wrapper.emitted('note-click')).toEqual([['E']])
+    })
+
+    it('emits note-click with the combined note when selecting an accidental', async () => {
+      const wrapper = mount(NotePicker, {
+        props: { modelValue: 'F', disabled: false, 'onUpdate:modelValue': () => {} },
+      })
+      await wrapper.findAll('.accidentals-row .picker-btn')[3]!.trigger('click') // #
+      expect(wrapper.emitted('note-click')).toEqual([['F#']])
+    })
+
+    it('emits both update:modelValue and note-click from the same click', async () => {
+      const updates: (string | null)[] = []
+      const wrapper = mount(NotePicker, {
+        props: {
+          modelValue: null,
+          disabled: false,
+          'onUpdate:modelValue': (v: string | null | undefined) => updates.push(v ?? null),
+        },
+      })
+      await wrapper.findAll('.letters-row .picker-btn')[4]!.trigger('click') // G
+      expect(updates).toEqual(['G'])
+      expect(wrapper.emitted('note-click')).toEqual([['G']])
+    })
+  })
 })

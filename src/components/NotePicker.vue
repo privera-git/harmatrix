@@ -2,14 +2,15 @@
 import { computed } from 'vue'
 import { parseNote } from '@/music/note'
 import type { NoteLetter, Accidental } from '@/music/note'
-import { useAudio } from '@/composables/useAudio'
-
-const { playNote } = useAudio()
 
 const model = defineModel<string | null>()
 
 defineProps<{
   disabled: boolean
+}>()
+
+const emit = defineEmits<{
+  'note-click': [note: string]
 }>()
 
 const LETTERS: NoteLetter[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
@@ -31,12 +32,12 @@ function selectLetter(letter: NoteLetter) {
     const candidate = letter + activeAccidental.value
     if (parseNote(candidate)) {
       model.value = candidate
-      playNote(candidate)
+      emit('note-click', candidate)
       return
     }
   }
   model.value = letter
-  playNote(letter)
+  emit('note-click', letter)
 }
 
 function selectAccidental(acc: Accidental) {
@@ -44,7 +45,7 @@ function selectAccidental(acc: Accidental) {
   const candidate = activeLetter.value + acc
   if (parseNote(candidate)) {
     model.value = candidate
-    playNote(candidate)
+    emit('note-click', candidate)
   }
 }
 </script>

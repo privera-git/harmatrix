@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { generateMatrix, intervalToDegreeLabel } from '@/music/matrix'
-import type { MatrixPuzzle } from '@/music/matrix'
+import { generateMatrix, intervalToDegreeLabel, computePlaybackNote } from '@/music/matrix'
+import type { MatrixPuzzle, MatrixCell } from '@/music/matrix'
 import { parseNote } from '@/music/note'
 
 const col = (puzzle: MatrixPuzzle, c: number) =>
@@ -124,6 +124,136 @@ describe('generateMatrix — degrees', () => {
 
   it('ionian has degrees [1, 2, 3, 4, 5, 6, 7]', () => {
     expect(generateMatrix('C', 'ionian')?.degrees).toEqual(['1', '2', '3', '4', '5', '6', '7'])
+  })
+})
+
+describe('computePlaybackNote', () => {
+  // F major chord: semitones [0,4,7], diagonal note F
+  const fMajorCells: MatrixCell[][] = [
+    [
+      { note: 'F', isGiven: true, row: 0, col: 0 },
+      { note: 'Db', isGiven: false, row: 0, col: 1 },
+      { note: 'Bb', isGiven: false, row: 0, col: 2 },
+    ],
+    [
+      { note: 'A', isGiven: false, row: 1, col: 0 },
+      { note: 'F', isGiven: true, row: 1, col: 1 },
+      { note: 'D', isGiven: false, row: 1, col: 2 },
+    ],
+    [
+      { note: 'C', isGiven: false, row: 2, col: 0 },
+      { note: 'A', isGiven: false, row: 2, col: 1 },
+      { note: 'F', isGiven: true, row: 2, col: 2 },
+    ],
+  ]
+  const fMajorSemitones = [0, 4, 7]
+
+  it('computes A4 for row1/col0 (A above the given F4)', () => {
+    expect(computePlaybackNote(fMajorCells, fMajorSemitones, { row: 1, col: 0, note: 'A' })).toBe('A4')
+  })
+
+  it('computes C5 for row2/col0 (C above A4)', () => {
+    expect(computePlaybackNote(fMajorCells, fMajorSemitones, { row: 2, col: 0, note: 'C' })).toBe('C5')
+  })
+
+  it('computes Bb3 for row0/col2 (Bb below the given F4)', () => {
+    expect(computePlaybackNote(fMajorCells, fMajorSemitones, { row: 0, col: 2, note: 'Bb' })).toBe('Bb3')
+  })
+
+  it('computes D4 for row1/col2 (D below F4)', () => {
+    expect(computePlaybackNote(fMajorCells, fMajorSemitones, { row: 1, col: 2, note: 'D' })).toBe('D4')
+  })
+
+  it('computes F4 for the given cell itself', () => {
+    expect(computePlaybackNote(fMajorCells, fMajorSemitones, { row: 0, col: 0, note: 'F' })).toBe('F4')
+  })
+
+  it('falls back to the bare note when intervalSemitones is undefined', () => {
+    expect(computePlaybackNote(fMajorCells, undefined, { row: 2, col: 0, note: 'C' })).toBe('C')
+  })
+
+  it('falls back to the bare (empty) note when note is empty', () => {
+    expect(computePlaybackNote(fMajorCells, fMajorSemitones, { row: 0, col: 1, note: '' })).toBe('')
+  })
+
+  it('computes Cb4 for a Cb cell a semitone below given C4', () => {
+    const cells: MatrixCell[][] = [
+      [
+        { note: 'C', isGiven: true, row: 0, col: 0 },
+        { note: '', isGiven: false, row: 0, col: 1 },
+      ],
+      [
+        { note: 'Cb', isGiven: false, row: 1, col: 0 },
+        { note: 'C', isGiven: true, row: 1, col: 1 },
+      ],
+    ]
+    expect(computePlaybackNote(cells, [0, -1], { row: 1, col: 0, note: 'Cb' })).toBe('Cb4')
+  })
+
+  it('computes Cbb4 for a Cbb cell two semitones below given C4', () => {
+    const cells: MatrixCell[][] = [
+      [
+        { note: 'C', isGiven: true, row: 0, col: 0 },
+        { note: '', isGiven: false, row: 0, col: 1 },
+      ],
+      [
+        { note: 'Cbb', isGiven: false, row: 1, col: 0 },
+        { note: 'C', isGiven: true, row: 1, col: 1 },
+      ],
+    ]
+    expect(computePlaybackNote(cells, [0, -2], { row: 1, col: 0, note: 'Cbb' })).toBe('Cbb4')
+  })
+
+  it('computes B#4 for a B# cell a semitone above given B4', () => {
+    const cells: MatrixCell[][] = [
+      [
+        { note: 'B', isGiven: true, row: 0, col: 0 },
+        { note: '', isGiven: false, row: 0, col: 1 },
+      ],
+      [
+        { note: 'B#', isGiven: false, row: 1, col: 0 },
+        { note: 'B', isGiven: true, row: 1, col: 1 },
+      ],
+    ]
+    expect(computePlaybackNote(cells, [0, 1], { row: 1, col: 0, note: 'B#' })).toBe('B#4')
+  })
+
+  it('computes B##4 for a B## cell two semitones above given B4', () => {
+    const cells: MatrixCell[][] = [
+      [
+        { note: 'B', isGiven: true, row: 0, col: 0 },
+        { note: '', isGiven: false, row: 0, col: 1 },
+      ],
+      [
+        { note: 'B##', isGiven: false, row: 1, col: 0 },
+        { note: 'B', isGiven: true, row: 1, col: 1 },
+      ],
+    ]
+    expect(computePlaybackNote(cells, [0, 2], { row: 1, col: 0, note: 'B##' })).toBe('B##4')
+  })
+
+  it('computes the octave for a synthetic note not yet placed in the (still empty) cell', () => {
+    // Simulates auditioning a piano-key/note-picker click for an unanswered cell: the cell's
+    // own note is still '' (no answer submitted), but the helper computes the octave for
+    // whatever note is passed in, independent of what's actually stored at that position.
+    const unansweredCells: MatrixCell[][] = [
+      [
+        { note: 'F', isGiven: true, row: 0, col: 0 },
+        { note: '', isGiven: false, row: 0, col: 1 },
+        { note: '', isGiven: false, row: 0, col: 2 },
+      ],
+      [
+        { note: '', isGiven: false, row: 1, col: 0 },
+        { note: 'F', isGiven: true, row: 1, col: 1 },
+        { note: '', isGiven: false, row: 1, col: 2 },
+      ],
+      [
+        { note: '', isGiven: false, row: 2, col: 0 },
+        { note: '', isGiven: false, row: 2, col: 1 },
+        { note: 'F', isGiven: true, row: 2, col: 2 },
+      ],
+    ]
+    expect(computePlaybackNote(unansweredCells, fMajorSemitones, { row: 1, col: 0, note: 'A' })).toBe('A4')
   })
 })
 

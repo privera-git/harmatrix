@@ -30,4 +30,30 @@ describe('PianoKeyboard', () => {
       expect((key.element as HTMLElement).style.left).toBeTruthy()
     }
   })
+
+  describe('note-click emit', () => {
+    it('emits note-click with the bare pitch class when a white key is clicked', async () => {
+      const wrapper = mount(PianoKeyboard)
+      await wrapper.findAll('.white-key')[2]!.trigger('click') // E
+      expect(wrapper.emitted('note-click')).toEqual([['E']])
+    })
+
+    it('emits note-click with the bare pitch class when a black key is clicked', async () => {
+      const wrapper = mount(PianoKeyboard)
+      await wrapper.findAll('.black-key')[0]!.trigger('click') // C#
+      expect(wrapper.emitted('note-click')).toEqual([['C#']])
+    })
+
+    it('does not emit note-click for an inactive key when activeOnly is set', async () => {
+      const wrapper = mount(PianoKeyboard, { props: { activeOnly: true, activeNote: 'C' } })
+      await wrapper.findAll('.white-key')[2]!.trigger('click') // E, not active
+      expect(wrapper.emitted('note-click')).toBeUndefined()
+    })
+
+    it('emits note-click for the active key when activeOnly is set', async () => {
+      const wrapper = mount(PianoKeyboard, { props: { activeOnly: true, activeNote: 'C' } })
+      await wrapper.findAll('.white-key')[0]!.trigger('click') // C, active
+      expect(wrapper.emitted('note-click')).toEqual([['C']])
+    })
+  })
 })
