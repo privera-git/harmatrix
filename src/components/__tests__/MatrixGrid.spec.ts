@@ -72,13 +72,13 @@ describe('MatrixGrid', () => {
       expect(wrapper.emitted('cell-click')).toEqual([[2, 0]])
     })
 
-    it('does not emit cell-click when a given cell is clicked', async () => {
+    it('emits cell-click with correct row/col when a given cell is clicked', async () => {
       const wrapper = mount(MatrixGrid, {
         props: { cells: makeCells(3), mode: 'input', showDegreeLabels: false },
       })
       // Cell at DOM index 2 is (2,2) — on the diagonal, given.
       await wrapper.findAll('.matrix-cell')[2]!.trigger('click')
-      expect(wrapper.emitted('cell-click')).toBeUndefined()
+      expect(wrapper.emitted('cell-click')).toEqual([[2, 2]])
     })
 
     it('applies active class to the active cell', () => {

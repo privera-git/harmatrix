@@ -73,10 +73,6 @@ function noteForColumnPlayback(cell: MatrixCell): string {
 
 function handleClick(cell: MatrixCell) {
   if (props.mode !== 'input') return
-  if (cell.isGiven) {
-    if (cell.note) playNote(noteForColumnPlayback(cell))
-    return
-  }
   emit('cell-click', cell.row, cell.col)
   if (cell.note) playNote(noteForColumnPlayback(cell))
 }

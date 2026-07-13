@@ -68,7 +68,9 @@ const displayCells = computed<MatrixCell[][]>(() => {
 const activeCellNote = computed<string | null>({
   get() {
     if (!activeCell.value || session.value.phase !== 'playing') return null
-    return session.value.answers[activeCell.value.row]?.[activeCell.value.col] ?? null
+    const { row, col } = activeCell.value
+    const cell = session.value.puzzle.cells[row]?.[col]
+    return cell?.isGiven ? cell.note : (session.value.answers[row]?.[col] ?? null)
   },
   set(note: string | null) {
     if (!activeCell.value || note === null || session.value.phase !== 'playing') return
