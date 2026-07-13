@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { computePlaybackNote } from '@/music/matrix'
 import type { MatrixCell } from '@/music/matrix'
 import type { AnswerResult } from '@/music/scoring'
 import { useAudio } from '@/composables/useAudio'
-import { Note } from '@/music/tonal'
 
 const { playNote } = useAudio()
 
@@ -56,19 +56,7 @@ function isActive(cell: MatrixCell): boolean {
 }
 
 function noteForColumnPlayback(cell: MatrixCell): string {
-  if (!cell.note || !props.intervalSemitones) return cell.note
-  const givenRow = cell.col // diagonal: given is always at row === col
-  const givenCell = props.cells[givenRow]?.[cell.col]
-  if (!givenCell?.note) return cell.note
-  const givenMidi = Note.midi(`${givenCell.note}4`) ?? 60
-  const semDiff = (props.intervalSemitones[cell.row] ?? 0) - (props.intervalSemitones[givenRow] ?? 0)
-  const targetMidi = givenMidi + semDiff
-  const { letter, alt } = Note.get(cell.note)
-  // Note.get().chroma wraps mod 12, which is wrong for Cb/Cbb/B#/B## whose alt pushes the
-  // pitch class outside 0-11; rebuild the unbounded value from the natural letter + alt instead.
-  const unboundedChroma = Note.get(letter).chroma + alt
-  const octave = Math.round((targetMidi - unboundedChroma) / 12) - 1
-  return `${cell.note}${octave}`
+  return computePlaybackNote(props.cells, props.intervalSemitones, cell)
 }
 
 function handleClick(cell: MatrixCell) {

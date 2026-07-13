@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { parseNote } from '@/music/note'
-import { useAudio } from '@/composables/useAudio'
-
-const { playNote } = useAudio()
 
 const props = defineProps<{
   activeNote?: string | null
   activeNotes?: string[]
   activeOnly?: boolean
+}>()
+
+const emit = defineEmits<{
+  'note-click': [note: string]
 }>()
 
 const activeChroma = computed<number | null>(() => {
@@ -32,7 +33,7 @@ function isKeyActive(noteName: string): boolean {
 
 function handleKeyClick(noteName: string): void {
   if (props.activeOnly && !isKeyActive(noteName)) return
-  playNote(noteName)
+  emit('note-click', noteName)
 }
 
 const WHITE_KEY_WIDTH = 36

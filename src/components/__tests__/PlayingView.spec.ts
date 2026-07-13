@@ -4,6 +4,11 @@ import { setActivePinia, createPinia } from 'pinia'
 import PlayingView from '@/components/PlayingView.vue'
 import { useGameStore } from '@/stores/game'
 
+const mockPlayNote = vi.fn<(note: string) => void>()
+vi.mock('@/composables/useAudio', () => ({
+  useAudio: () => ({ playNote: mockPlayNote, playJingle: vi.fn<() => void>() }),
+}))
+
 const DEFAULT_OPTIONS = { noDegreeLabels: false, noPianoKeyboard: false }
 
 function startGame(opts = DEFAULT_OPTIONS) {
@@ -108,6 +113,53 @@ describe('PlayingView', () => {
       const expectedNote = givenCell.text()
       await givenCell.trigger('click')
       expect(wrapper.findComponent({ name: 'PianoKeyboard' }).props('activeNote')).toBe(expectedNote)
+    })
+  })
+
+  describe('piano keyboard / note picker playback (issue #122)', () => {
+    beforeEach(() => {
+      mockPlayNote.mockClear()
+    })
+
+    it('does not play a note when no cell is active', async () => {
+      startGame()
+      const wrapper = mountView()
+      await wrapper.findComponent({ name: 'PianoKeyboard' }).vm.$emit('note-click', 'C')
+      expect(mockPlayNote).not.toHaveBeenCalled()
+    })
+
+    it("plays a piano key note in the given cell's own octave when a given cell is active", async () => {
+      useGameStore().startPuzzle('C', 'dom9', DEFAULT_OPTIONS)
+      const wrapper = mountView()
+
+      await wrapper.find('.matrix-cell.given').trigger('click')
+      await wrapper.findComponent({ name: 'PianoKeyboard' }).vm.$emit('note-click', 'G')
+
+      // Given cells always yield a zero semitone offset from themselves, so any
+      // clicked note is placed in the same octave register as the given C4.
+      expect(mockPlayNote).toHaveBeenCalledWith('G3')
+    })
+
+    it('plays the octave-correct note when clicking a piano key with a non-given cell active', async () => {
+      useGameStore().startPuzzle('C', 'dom9', DEFAULT_OPTIONS)
+      const wrapper = mountView()
+
+      // Reversed row order puts row 4 (the 9th-degree row) first in the DOM;
+      // its non-given col-0 cell is the "D" (9th) of the C dom9 chord, 14 semitones above C4.
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click')
+      await wrapper.findComponent({ name: 'PianoKeyboard' }).vm.$emit('note-click', 'D')
+
+      expect(mockPlayNote).toHaveBeenCalledWith('D5')
+    })
+
+    it('plays the octave-correct note when NotePicker emits note-click', async () => {
+      useGameStore().startPuzzle('C', 'dom9', DEFAULT_OPTIONS)
+      const wrapper = mountView()
+
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // row4/col0, the 9th
+      await wrapper.findComponent({ name: 'NotePicker' }).vm.$emit('note-click', 'D')
+
+      expect(mockPlayNote).toHaveBeenCalledWith('D5')
     })
   })
 

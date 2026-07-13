@@ -18,9 +18,10 @@ import NotePicker from '@/components/NotePicker.vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import TheoryModal from '@/components/TheoryModal.vue'
 import { useAudio } from '@/composables/useAudio'
+import { computePlaybackNote } from '@/music/matrix'
 import type { MatrixCell } from '@/music/matrix'
 
-const { playJingle } = useAudio()
+const { playNote, playJingle } = useAudio()
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
@@ -102,6 +103,17 @@ const puzzleIntervalSemitones = computed<number[]>(() => {
     q in INTERVAL_CATALOG ? INTERVAL_CATALOG[q as IntervalGroup] : null
   return entry?.intervals.map((iv) => Interval.semitones(iv) ?? 0) ?? []
 })
+
+function playNoteForActiveCell(note: string): void {
+  if (!activeCell.value || session.value.phase !== 'playing') return
+  const { row, col } = activeCell.value
+  const playbackNote = computePlaybackNote(session.value.puzzle.cells, puzzleIntervalSemitones.value, {
+    row,
+    col,
+    note,
+  })
+  playNote(playbackNote)
+}
 
 const puzzleTitle = computed(() => {
   if (session.value.phase !== 'playing') return ''
@@ -185,9 +197,13 @@ function submit() {
         >Hint</button>
       </div>
 
-      <PianoKeyboard v-if="showPiano" :active-note="activeCellNote" />
+      <PianoKeyboard v-if="showPiano" :active-note="activeCellNote" @note-click="playNoteForActiveCell" />
 
-      <NotePicker v-model="activeCellNote" :disabled="activeCell === null" />
+      <NotePicker
+        v-model="activeCellNote"
+        :disabled="activeCell === null"
+        @note-click="playNoteForActiveCell"
+      />
 
       <button class="submit-btn" @click="submit">Submit</button>
     </main>

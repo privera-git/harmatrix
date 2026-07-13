@@ -63,6 +63,30 @@ export function puzzleSize(quality: ChordQuality | ScaleMode | IntervalGroup): n
   return intervalsFor(quality).length
 }
 
+// Computes the octave-qualified pitch a note should sound at when it occupies a given
+// matrix position, based on its semitone distance from that column's given (diagonal) note.
+// Reused both to replay an existing cell's own note (MatrixGrid) and to audition an
+// arbitrary candidate note as if it were placed in a cell (piano keyboard / note picker).
+export function computePlaybackNote(
+  cells: MatrixCell[][],
+  intervalSemitones: number[] | undefined,
+  cell: Pick<MatrixCell, 'row' | 'col' | 'note'>,
+): string {
+  if (!cell.note || !intervalSemitones) return cell.note
+  const givenRow = cell.col // diagonal: given is always at row === col
+  const givenCell = cells[givenRow]?.[cell.col]
+  if (!givenCell?.note) return cell.note
+  const givenMidi = Note.midi(`${givenCell.note}4`) ?? 60
+  const semDiff = (intervalSemitones[cell.row] ?? 0) - (intervalSemitones[givenRow] ?? 0)
+  const targetMidi = givenMidi + semDiff
+  const { letter, alt } = Note.get(cell.note)
+  // Note.get().chroma wraps mod 12, which is wrong for Cb/Cbb/B#/B## whose alt pushes the
+  // pitch class outside 0-11; rebuild the unbounded value from the natural letter + alt instead.
+  const unboundedChroma = Note.get(letter).chroma + alt
+  const octave = Math.round((targetMidi - unboundedChroma) / 12) - 1
+  return `${cell.note}${octave}`
+}
+
 export function generateMatrix(
   diagonalNote: string,
   quality: ChordQuality | ScaleMode | IntervalGroup,
