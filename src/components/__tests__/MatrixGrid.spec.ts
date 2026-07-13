@@ -272,6 +272,78 @@ describe('MatrixGrid', () => {
       await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // (row2, col0) = C
       expect(mockPlayNote).toHaveBeenCalledWith('C')
     })
+
+    it('plays Cb4 for a Cb cell a semitone below given C4 (wrapped-chroma edge case)', async () => {
+      const cells: MatrixCell[][] = [
+        [
+          { note: 'C', isGiven: true, row: 0, col: 0 },
+          { note: '', isGiven: false, row: 0, col: 1 },
+        ],
+        [
+          { note: 'Cb', isGiven: false, row: 1, col: 0 },
+          { note: 'C', isGiven: true, row: 1, col: 1 },
+        ],
+      ]
+      const wrapper = mount(MatrixGrid, {
+        props: { cells, mode: 'input', showDegreeLabels: false, intervalSemitones: [0, -1] },
+      })
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // (row1, col0) = Cb
+      expect(mockPlayNote).toHaveBeenCalledWith('Cb4')
+    })
+
+    it('plays Cbb4 for a Cbb cell two semitones below given C4 (wrapped-chroma edge case)', async () => {
+      const cells: MatrixCell[][] = [
+        [
+          { note: 'C', isGiven: true, row: 0, col: 0 },
+          { note: '', isGiven: false, row: 0, col: 1 },
+        ],
+        [
+          { note: 'Cbb', isGiven: false, row: 1, col: 0 },
+          { note: 'C', isGiven: true, row: 1, col: 1 },
+        ],
+      ]
+      const wrapper = mount(MatrixGrid, {
+        props: { cells, mode: 'input', showDegreeLabels: false, intervalSemitones: [0, -2] },
+      })
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // (row1, col0) = Cbb
+      expect(mockPlayNote).toHaveBeenCalledWith('Cbb4')
+    })
+
+    it('plays B#4 for a B# cell a semitone above given B4 (wrapped-chroma edge case)', async () => {
+      const cells: MatrixCell[][] = [
+        [
+          { note: 'B', isGiven: true, row: 0, col: 0 },
+          { note: '', isGiven: false, row: 0, col: 1 },
+        ],
+        [
+          { note: 'B#', isGiven: false, row: 1, col: 0 },
+          { note: 'B', isGiven: true, row: 1, col: 1 },
+        ],
+      ]
+      const wrapper = mount(MatrixGrid, {
+        props: { cells, mode: 'input', showDegreeLabels: false, intervalSemitones: [0, 1] },
+      })
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // (row1, col0) = B#
+      expect(mockPlayNote).toHaveBeenCalledWith('B#4')
+    })
+
+    it('plays B##4 for a B## cell two semitones above given B4 (wrapped-chroma edge case)', async () => {
+      const cells: MatrixCell[][] = [
+        [
+          { note: 'B', isGiven: true, row: 0, col: 0 },
+          { note: '', isGiven: false, row: 0, col: 1 },
+        ],
+        [
+          { note: 'B##', isGiven: false, row: 1, col: 0 },
+          { note: 'B', isGiven: true, row: 1, col: 1 },
+        ],
+      ]
+      const wrapper = mount(MatrixGrid, {
+        props: { cells, mode: 'input', showDegreeLabels: false, intervalSemitones: [0, 2] },
+      })
+      await wrapper.findAll('.matrix-cell')[0]!.trigger('click') // (row1, col0) = B##
+      expect(mockPlayNote).toHaveBeenCalledWith('B##4')
+    })
   })
 
   describe('degree labels', () => {
