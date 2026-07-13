@@ -157,6 +157,22 @@ describe('recordSessionResults', () => {
   })
 })
 
+describe('recordSessionResults return value', () => {
+  it('returns false when the session does not cross targetScore', () => {
+    const store = useProgressStore()
+    expect(store.recordSessionResults('major', PERFECT, NO_HELP)).toBe(false)
+  })
+
+  it('returns true on the session that crosses targetScore', () => {
+    const store = useProgressStore()
+    const sessionsToTarget = TARGET_SCORE / PERFECT_SESSION_SCORE
+    for (let i = 0; i < sessionsToTarget - 1; i++) {
+      expect(store.recordSessionResults('major', PERFECT, NO_HELP)).toBe(false)
+    }
+    expect(store.recordSessionResults('major', PERFECT, NO_HELP)).toBe(true)
+  })
+})
+
 describe('currentLearningQuality', () => {
   it('returns the quality at the current stage/subStage', () => {
     const store = useProgressStore()

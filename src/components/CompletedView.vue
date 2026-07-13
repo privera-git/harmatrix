@@ -1,17 +1,33 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
 import { sessionMultiplier } from '@/music/scoring'
 import { formatPuzzleTitle } from '@/music/display'
+import { FEATURES } from '@/config/features'
+import { INTRO_STAGE } from '@/config/game'
 import MatrixGrid from '@/components/MatrixGrid.vue'
 import SubStageProgressBar from '@/components/SubStageProgressBar.vue'
+import CompletionModal from '@/components/CompletionModal.vue'
 import type { MatrixCell } from '@/music/matrix'
+import type { ChordQuality } from '@/music/data/chords'
+import type { ScaleMode } from '@/music/data/scales'
+import type { IntervalGroup } from '@/music/data/intervals'
+
+type Quality = ChordQuality | ScaleMode | IntervalGroup
+
+interface CompletionEvent {
+  completedQuality: Quality
+  nextQuality: Quality | null
+  showFreePlayUnlock: boolean
+}
 
 const gameStore = useGameStore()
 const progressStore = useProgressStore()
 const { session } = storeToRefs(gameStore)
+
+const completionEvent = ref<CompletionEvent | null>(null)
 
 const progressRatio = computed(() => {
   if (session.value.phase !== 'completed') return 0
@@ -70,8 +86,16 @@ onMounted(() => {
   const flatResults = puzzle.cells.flatMap((row, r) =>
     row.flatMap((cell, c) => (cell.isGiven ? [] : [results[r]?.[c] ?? 'wrong'])),
   )
-  progressStore.recordSessionResults(puzzle.quality, flatResults, options)
+  const stageBeforeAdvance = progressStore.state.learning.stage
+  const advanced = progressStore.recordSessionResults(puzzle.quality, flatResults, options)
   progressStore.updateStreak()
+  if (FEATURES.COMPLETION_MODAL && advanced) {
+    completionEvent.value = {
+      completedQuality: puzzle.quality,
+      nextQuality: progressStore.currentLearningQuality(),
+      showFreePlayUnlock: stageBeforeAdvance !== INTRO_STAGE,
+    }
+  }
 })
 
 function playAgain() {
@@ -120,6 +144,18 @@ function backToMenu() {
         <button class="action-btn action-btn--secondary" @click="backToMenu">Back to Menu</button>
       </div>
     </main>
+
+    <CompletionModal
+      v-if="FEATURES.COMPLETION_MODAL && completionEvent"
+      :completed-quality="completionEvent.completedQuality"
+      :next-quality="completionEvent.nextQuality"
+      :show-free-play-unlock="completionEvent.showFreePlayUnlock"
+      :score="session.score"
+      :breakdown="breakdown"
+      :multiplier="multiplier"
+      @continue="playAgain"
+      @stop="backToMenu"
+    />
   </div>
 </template>
 

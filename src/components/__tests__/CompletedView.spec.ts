@@ -2,8 +2,14 @@ import { describe, it, expect, beforeEach, vi, assert } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import CompletedView from '@/components/CompletedView.vue'
+import CompletionModal from '@/components/CompletionModal.vue'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
+
+vi.mock('@/config/features', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/config/features')>()
+  return { FEATURES: { ...actual.FEATURES, COMPLETION_MODAL: true } }
+})
 
 const DEFAULT_OPTIONS = { noDegreeLabels: false, noPianoKeyboard: false }
 
@@ -226,6 +232,70 @@ describe('CompletedView', () => {
       const game = completeGame()
       const wrapper = mountView()
       await wrapper.find('button:last-child').trigger('click')
+      expect(game.session.phase).toBe('idle')
+    })
+  })
+
+  describe('completion modal', () => {
+    it('does not show the modal when the sub-stage has not completed', () => {
+      completeGame()
+      const wrapper = mountView()
+      expect(wrapper.findComponent(CompletionModal).exists()).toBe(false)
+    })
+
+    it('does not show the modal in Free Play, even if accumulatedScore is already past target', () => {
+      const progress = useProgressStore()
+      progress.state.accumulatedScore['major'] = 1000
+      completeGame(DEFAULT_OPTIONS, true)
+      const wrapper = mountView()
+      expect(wrapper.findComponent(CompletionModal).exists()).toBe(false)
+    })
+
+    it('shows the modal when the sub-stage completes', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 } // 'major'
+      progress.state.accumulatedScore['major'] = 1000 // already past targetScore for any session size
+      completeGame()
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+      const modal = wrapper.findComponent(CompletionModal)
+      expect(modal.exists()).toBe(true)
+      expect(modal.props('completedQuality')).toBe('major')
+      expect(modal.props('nextQuality')).toBe('minor')
+    })
+
+    it('suppresses the Free Play unlock line when completing an Interval Basics sub-stage', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 1, subStage: 1 } // Interval Basics, always Free-Play-accessible
+      progress.state.accumulatedScore['seconds'] = 1000
+      const game = useGameStore()
+      game.startPuzzle('C', 'seconds', DEFAULT_OPTIONS, false)
+      game.completeSession()
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+      expect(wrapper.findComponent(CompletionModal).props('showFreePlayUnlock')).toBe(false)
+    })
+
+    it('Continue advances to the next quality', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 } // 'major'
+      progress.state.accumulatedScore['major'] = 1000
+      const game = completeGame()
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+      await wrapper.findComponent(CompletionModal).vm.$emit('continue')
+      assert(game.session.phase === 'playing')
+      expect(game.session.puzzle.quality).toBe('minor')
+    })
+
+    it('Stop returns to the menu', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 } // 'major'
+      progress.state.accumulatedScore['major'] = 1000
+      const game = completeGame()
+      const wrapper = mountView()
+      await wrapper.vm.$nextTick()
+      await wrapper.findComponent(CompletionModal).vm.$emit('stop')
       expect(game.session.phase).toBe('idle')
     })
   })

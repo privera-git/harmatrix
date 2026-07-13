@@ -126,7 +126,7 @@ export const useProgressStore = defineStore('progress', () => {
     quality: Quality,
     results: AnswerResult[],
     options: ScoringOptions,
-  ): void {
+  ): boolean {
     const existing = state.value.stats[quality] ?? { correct: 0, enharmonic: 0, wrong: 0, total: 0 }
     state.value.stats[quality] = {
       correct: existing.correct + results.filter((r) => r === 'correct').length,
@@ -143,7 +143,9 @@ export const useProgressStore = defineStore('progress', () => {
     if (accumulated >= targetScoreFor(results.length)) {
       state.value.accumulatedScore[quality] = 0
       advanceLearning()
+      return true
     }
+    return false
   }
 
   function advanceLearning(): void {

@@ -1,6 +1,6 @@
 import { Note } from '@/music/tonal'
 
-type JingleType = 'perfect' | 'enharmonic' | 'wrong'
+type JingleType = 'perfect' | 'enharmonic' | 'wrong' | 'fanfare'
 
 const JINGLES: Record<JingleType, Array<{ note: string; delayMs: number }>> = {
   // Ascending major arpeggio — extra 50ms gap before final note for fanfare feel
@@ -9,6 +9,18 @@ const JINGLES: Record<JingleType, Array<{ note: string; delayMs: number }>> = {
     { note: 'E5', delayMs: 100 },
     { note: 'G5', delayMs: 200 },
     { note: 'C6', delayMs: 350 },
+  ],
+  // Two-octave ascending major arpeggio resolving on a held triad — substage/stage completion
+  fanfare: [
+    { note: 'C4', delayMs: 0 },
+    { note: 'E4', delayMs: 90 },
+    { note: 'G4', delayMs: 180 },
+    { note: 'C5', delayMs: 270 },
+    { note: 'E5', delayMs: 360 },
+    { note: 'G5', delayMs: 450 },
+    { note: 'C6', delayMs: 600 },
+    { note: 'E5', delayMs: 600 },
+    { note: 'G4', delayMs: 600 },
   ],
   // Dominant 7th arpeggio — ascends hopefully but ends on unresolved tension
   enharmonic: [
