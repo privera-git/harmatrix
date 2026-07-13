@@ -77,7 +77,8 @@ onMounted(() => {
 function playAgain() {
   if (session.value.phase !== 'completed') return
   const { puzzle, options, isFreePlay } = session.value
-  gameStore.startPuzzle(progressStore.nextDiagonalNote(puzzle.quality, isFreePlay), puzzle.quality, options, isFreePlay)
+  const quality = isFreePlay ? puzzle.quality : (progressStore.currentLearningQuality() ?? puzzle.quality)
+  gameStore.startPuzzle(progressStore.nextDiagonalNote(quality, isFreePlay), quality, options, isFreePlay)
 }
 
 function backToMenu() {

@@ -183,8 +183,31 @@ describe('CompletedView', () => {
       expect(game.session.phase).toBe('playing')
     })
 
-    it('Play Again preserves quality', async () => {
+    it('Play Again preserves quality when the learning position has not advanced', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 2, subStage: 1 } // CURRICULUM[1][0] === 'major'
       const game = completeGame()
+      const wrapper = mountView()
+      await wrapper.find('button:first-child').trigger('click')
+      assert(game.session.phase === 'playing')
+      expect(game.session.puzzle.quality).toBe('major')
+    })
+
+    it('Play Again advances to the new quality once the learning position has moved past the completed puzzle', async () => {
+      const progress = useProgressStore()
+      const game = completeGame() // starts a 'major' puzzle; default learning position is stage 1/1 ('seconds')
+      const wrapper = mountView()
+      // Simulate recordSessionResults having advanced the sub-stage during onMounted.
+      progress.state.learning = { stage: 2, subStage: 2 } // CURRICULUM[1][1] === 'minor'
+      await wrapper.find('button:first-child').trigger('click')
+      assert(game.session.phase === 'playing')
+      expect(game.session.puzzle.quality).toBe('minor')
+    })
+
+    it('Play Again uses the puzzle quality (not the learning position) in Free Play', async () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 3, subStage: 1 } // unrelated learning position
+      const game = completeGame(DEFAULT_OPTIONS, true)
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
       assert(game.session.phase === 'playing')

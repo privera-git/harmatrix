@@ -211,6 +211,11 @@ export const useProgressStore = defineStore('progress', () => {
     return (state.value.accumulatedScore[quality] ?? 0) / targetScoreFor(numCells)
   }
 
+  function currentLearningQuality(): Quality | null {
+    const { stage, subStage } = state.value.learning
+    return CURRICULUM[stage - 1]?.[subStage - 1] ?? null
+  }
+
   function jumpToPosition(stage: number, subStage: number): void {
     const stageQualities = CURRICULUM[stage - 1]
     const valid = stageQualities !== undefined && subStage >= 1 && subStage <= stageQualities.length
@@ -283,6 +288,7 @@ export const useProgressStore = defineStore('progress', () => {
     incrementSessionsPlayed,
     guidanceLevelFor,
     progressRatio,
+    currentLearningQuality,
     advanceLearning,
     unlockContent,
     updateStreak,

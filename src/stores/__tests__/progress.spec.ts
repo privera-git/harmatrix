@@ -157,6 +157,25 @@ describe('recordSessionResults', () => {
   })
 })
 
+describe('currentLearningQuality', () => {
+  it('returns the quality at the current stage/subStage', () => {
+    const store = useProgressStore()
+    expect(store.currentLearningQuality()).toBe('seconds')
+  })
+
+  it('returns the correct quality after moving within a stage', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 2, subStage: 2 }
+    expect(store.currentLearningQuality()).toBe('minor')
+  })
+
+  it('returns null when the stage is beyond CURRICULUM', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 99, subStage: 1 }
+    expect(store.currentLearningQuality()).toBeNull()
+  })
+})
+
 describe('incrementSessionsPlayed', () => {
   it('increments sessionsPlayed for a quality', () => {
     const store = useProgressStore()

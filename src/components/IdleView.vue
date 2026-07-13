@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useProgressStore } from '@/stores/progress'
-import { CURRICULUM, STAGE_NAMES, INTRO_STAGE } from '@/config/game'
+import { STAGE_NAMES, INTRO_STAGE } from '@/config/game'
 import { FEATURES } from '@/config/features'
 import FreePlayPicker from '@/components/FreePlayPicker.vue'
 import SubStageProgressBar from '@/components/SubStageProgressBar.vue'
@@ -29,10 +29,7 @@ const isTriadsStage = computed(
   () => learning.value.stage === INTRO_STAGE + 1 && !state.value.unlockedContent.includes('seconds'),
 )
 
-const quality = computed(() => {
-  const stageQualities = CURRICULUM[learning.value.stage - 1]
-  return stageQualities?.[learning.value.subStage - 1] ?? 'major'
-})
+const quality = computed(() => progressStore.currentLearningQuality() ?? 'major')
 
 const progressRatio = computed(() => progressStore.progressRatio(quality.value))
 
