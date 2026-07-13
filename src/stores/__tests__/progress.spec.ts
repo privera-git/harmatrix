@@ -157,6 +157,41 @@ describe('recordSessionResults', () => {
   })
 })
 
+describe('recordSessionResults return value', () => {
+  it('returns false when the session does not cross targetScore', () => {
+    const store = useProgressStore()
+    expect(store.recordSessionResults('major', PERFECT, NO_HELP)).toBe(false)
+  })
+
+  it('returns true on the session that crosses targetScore', () => {
+    const store = useProgressStore()
+    const sessionsToTarget = TARGET_SCORE / PERFECT_SESSION_SCORE
+    for (let i = 0; i < sessionsToTarget - 1; i++) {
+      expect(store.recordSessionResults('major', PERFECT, NO_HELP)).toBe(false)
+    }
+    expect(store.recordSessionResults('major', PERFECT, NO_HELP)).toBe(true)
+  })
+})
+
+describe('currentLearningQuality', () => {
+  it('returns the quality at the current stage/subStage', () => {
+    const store = useProgressStore()
+    expect(store.currentLearningQuality()).toBe('seconds')
+  })
+
+  it('returns the correct quality after moving within a stage', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 2, subStage: 2 }
+    expect(store.currentLearningQuality()).toBe('minor')
+  })
+
+  it('returns null when the stage is beyond CURRICULUM', () => {
+    const store = useProgressStore()
+    store.state.learning = { stage: 99, subStage: 1 }
+    expect(store.currentLearningQuality()).toBeNull()
+  })
+})
+
 describe('incrementSessionsPlayed', () => {
   it('increments sessionsPlayed for a quality', () => {
     const store = useProgressStore()
