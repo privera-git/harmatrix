@@ -63,8 +63,11 @@ function noteForColumnPlayback(cell: MatrixCell): string {
   const givenMidi = Note.midi(`${givenCell.note}4`) ?? 60
   const semDiff = (props.intervalSemitones[cell.row] ?? 0) - (props.intervalSemitones[givenRow] ?? 0)
   const targetMidi = givenMidi + semDiff
-  const chroma = Note.get(cell.note).chroma
-  const octave = Math.round((targetMidi - chroma) / 12) - 1
+  const { letter, alt } = Note.get(cell.note)
+  // Note.get().chroma wraps mod 12, which is wrong for Cb/Cbb/B#/B## whose alt pushes the
+  // pitch class outside 0-11; rebuild the unbounded value from the natural letter + alt instead.
+  const unboundedChroma = Note.get(letter).chroma + alt
+  const octave = Math.round((targetMidi - unboundedChroma) / 12) - 1
   return `${cell.note}${octave}`
 }
 
