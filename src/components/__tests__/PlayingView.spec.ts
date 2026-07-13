@@ -92,6 +92,25 @@ describe('PlayingView', () => {
     })
   })
 
+  describe('piano keyboard', () => {
+    it('sets the active cell when a given cell is clicked', async () => {
+      startGame()
+      const wrapper = mountView()
+      const givenCell = wrapper.find('.matrix-cell.given')
+      await givenCell.trigger('click')
+      expect(wrapper.find('.matrix-cell.active').exists()).toBe(true)
+    })
+
+    it("highlights the given cell's note on the piano keyboard after clicking it", async () => {
+      startGame()
+      const wrapper = mountView()
+      const givenCell = wrapper.find('.matrix-cell.given')
+      const expectedNote = givenCell.text()
+      await givenCell.trigger('click')
+      expect(wrapper.findComponent({ name: 'PianoKeyboard' }).props('activeNote')).toBe(expectedNote)
+    })
+  })
+
   describe('answer submission flow', () => {
     it('stores the answer when NotePicker emits a note', async () => {
       const game = startGame()
