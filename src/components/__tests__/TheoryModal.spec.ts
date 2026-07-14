@@ -23,6 +23,16 @@ describe('TheoryModal', () => {
     expect(wrapper.find('.modal-subtitle').exists()).toBe(false)
   })
 
+  it('keeps minor tetrad symbol lowercase in title (m7)', () => {
+    const wrapper = mount(TheoryModal, { props: { quality: 'm7' } })
+    expect(wrapper.find('.modal-title').text()).toBe('m7')
+  })
+
+  it('keeps minor-major tetrad symbol lowercase in title (mMaj7)', () => {
+    const wrapper = mount(TheoryModal, { props: { quality: 'mMaj7' } })
+    expect(wrapper.find('.modal-title').text()).toBe('mΔ7')
+  })
+
   it('shows interval group label as title', () => {
     const wrapper = mount(TheoryModal, { props: { quality: 'thirds' } })
     expect(wrapper.find('.modal-title').text()).toBe('Thirds')

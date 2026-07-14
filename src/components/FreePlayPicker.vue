@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { STAGE_NAMES } from '@/config/game'
-import { formatQualityLabel } from '@/music/display'
+import { formatQualityLabel, isChordSymbolQuality } from '@/music/display'
 import type { FreePlayStageAccess } from '@/stores/progress'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
@@ -45,6 +45,11 @@ function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, acces
   if (!accessible) return
   emit('play', quality)
 }
+
+function subStageLabel(quality: ChordQuality | ScaleMode | IntervalGroup): string {
+  const label = formatQualityLabel(quality)
+  return isChordSymbolQuality(quality) ? label : label.replace(/\b\w/g, (c) => c.toUpperCase())
+}
 </script>
 
 <template>
@@ -77,7 +82,7 @@ function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, acces
           :disabled="!subStage.accessible"
           @click="selectSubStage(subStage.quality, subStage.accessible)"
         >
-          {{ formatQualityLabel(subStage.quality) }}
+          {{ subStageLabel(subStage.quality) }}
         </button>
       </div>
     </div>
@@ -146,7 +151,6 @@ function selectSubStage(quality: ChordQuality | ScaleMode | IntervalGroup, acces
   text-align: left;
   cursor: pointer;
   font-size: 0.9rem;
-  text-transform: capitalize;
 }
 
 .sub-stage-btn:last-child {

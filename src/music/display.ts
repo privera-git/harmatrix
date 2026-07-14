@@ -51,6 +51,12 @@ export function formatQualityLabel(quality: ChordQuality | ScaleMode | IntervalG
   return SCALE_LABEL[quality as ScaleMode] ?? quality
 }
 
+// Tetrad/extended chord labels (e.g. 'm7', 'mΔ7') are notation symbols, not words —
+// they must never be capitalized, unlike the word-phrase labels used for triads/scales/intervals.
+export function isChordSymbolQuality(quality: ChordQuality | ScaleMode | IntervalGroup): boolean {
+  return quality in CHORD_CATALOG && !(quality in TRIAD_LABEL)
+}
+
 export function formatPuzzleTitle(note: string, quality: ChordQuality | ScaleMode | IntervalGroup): string {
   if (quality in CHORD_CATALOG) {
     const def = CHORD_CATALOG[quality as ChordQuality]
