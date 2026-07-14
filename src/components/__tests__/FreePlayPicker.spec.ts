@@ -127,6 +127,35 @@ describe('FreePlayPicker', () => {
     })
   })
 
+  describe('sub-stage label casing', () => {
+    it('keeps minor tetrad symbols lowercase (m7, mΔ7)', async () => {
+      const access = makeAccess([
+        {
+          accessible: true,
+          subStages: [
+            { accessible: true, quality: 'm7' },
+            { accessible: true, quality: 'mMaj7' },
+          ],
+        },
+      ])
+      const wrapper = mount(FreePlayPicker, {
+        props: { freePlayAccess: access, initialStage: 0 },
+      })
+      await nextTick()
+      const labels = wrapper.findAll('.sub-stage-btn').map((b) => b.text())
+      expect(labels).toEqual(['m7', 'mΔ7'])
+    })
+
+    it('title-cases word-phrase labels (triads)', async () => {
+      const wrapper = mount(FreePlayPicker, {
+        props: { freePlayAccess: ACCESS_STAGE0_PARTIAL, initialStage: 0 },
+      })
+      await nextTick()
+      const labels = wrapper.findAll('.sub-stage-btn').map((b) => b.text())
+      expect(labels).toEqual(['Major Triad', 'Minor Triad', 'Augmented Triad', 'Diminished Triad'])
+    })
+  })
+
   describe('play emission', () => {
     it('emits play with the quality when an accessible sub-stage is clicked', async () => {
       const wrapper = mount(FreePlayPicker, {
