@@ -8,6 +8,7 @@ import { FEATURES } from '@/config/features'
 import FreePlayPicker from '@/components/FreePlayPicker.vue'
 import SubStageProgressBar from '@/components/SubStageProgressBar.vue'
 import TheoryModal from '@/components/TheoryModal.vue'
+import { formatQualityLabel, isChordSymbolQuality } from '@/music/display'
 import type { ChordQuality } from '@/music/data/chords'
 import type { ScaleMode } from '@/music/data/scales'
 import type { IntervalGroup } from '@/music/data/intervals'
@@ -32,6 +33,11 @@ const isTriadsStage = computed(
 const quality = computed(() => progressStore.currentLearningQuality() ?? 'major')
 
 const progressRatio = computed(() => progressStore.progressRatio(quality.value))
+
+const qualityLabel = computed(() => {
+  const label = formatQualityLabel(quality.value)
+  return isChordSymbolQuality(quality.value) ? label : label.replace(/\b\w/g, (c) => c.toUpperCase())
+})
 
 function setMode(mode: 'learn' | 'freePlay'): void {
   progressStore.setIdleMode(mode)
@@ -98,7 +104,7 @@ function onStageOpen(stageIndex: number): void {
       <template v-if="idleMode === 'learn'">
         <div class="learning-position">{{ stageName }}</div>
         <div class="quality-label">
-          <span>Quality: {{ quality }}</span>
+          <span>Quality: {{ qualityLabel }}</span>
           <button
             v-if="FEATURES.THEORY_MODAL"
             class="info-btn"
@@ -235,7 +241,6 @@ function onStageOpen(stageIndex: number): void {
   gap: 0.5rem;
   font-size: 1rem;
   font-weight: 600;
-  text-transform: capitalize;
 }
 
 .info-btn {

@@ -68,7 +68,7 @@ describe('IdleView', () => {
     it('shows quality matching current learning position', () => {
       const wrapper = mountView()
       // Default position is stage 1, subStage 1 → 'seconds' (Interval Basics SS-1)
-      expect(wrapper.text()).toContain('seconds')
+      expect(wrapper.text()).toContain('Seconds')
     })
 
     it('shows updated quality when learning position advances', async () => {
@@ -76,7 +76,14 @@ describe('IdleView', () => {
       progress.state.learning = { stage: 1, subStage: 2 }
       const wrapper = mountView()
       // stage 1, subStage 2 → 'thirds' (Interval Basics SS-2)
-      expect(wrapper.text()).toContain('thirds')
+      expect(wrapper.text()).toContain('Thirds')
+    })
+
+    it('keeps minor tetrad symbols lowercase in the quality label (m7b5)', () => {
+      const progress = useProgressStore()
+      progress.state.learning = { stage: 3, subStage: 5 }
+      const wrapper = mountView()
+      expect(wrapper.text()).toContain('Quality: ø7')
     })
 
     it('reflects accumulatedScore progress in the progress bar', async () => {
