@@ -172,7 +172,7 @@ describe('CompletedView', () => {
       expect(wrapper.find('[role="progressbar"]').exists()).toBe(true)
     })
 
-    it('Play Again forwards isFreePlay: true', async () => {
+    it('Play Next forwards isFreePlay: true', async () => {
       const game = completeGame(DEFAULT_OPTIONS, true)
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
@@ -182,14 +182,14 @@ describe('CompletedView', () => {
   })
 
   describe('actions', () => {
-    it('transitions to playing on Play Again', async () => {
+    it('transitions to playing on Play Next', async () => {
       const game = completeGame()
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
       expect(game.session.phase).toBe('playing')
     })
 
-    it('Play Again preserves quality when the learning position has not advanced', async () => {
+    it('Play Next preserves quality when the learning position has not advanced', async () => {
       const progress = useProgressStore()
       progress.state.learning = { stage: 2, subStage: 1 } // CURRICULUM[1][0] === 'major'
       const game = completeGame()
@@ -199,7 +199,7 @@ describe('CompletedView', () => {
       expect(game.session.puzzle.quality).toBe('major')
     })
 
-    it('Play Again advances to the new quality once the learning position has moved past the completed puzzle', async () => {
+    it('Play Next advances to the new quality once the learning position has moved past the completed puzzle', async () => {
       const progress = useProgressStore()
       const game = completeGame() // starts a 'major' puzzle; default learning position is stage 1/1 ('seconds')
       const wrapper = mountView()
@@ -210,7 +210,7 @@ describe('CompletedView', () => {
       expect(game.session.puzzle.quality).toBe('minor')
     })
 
-    it('Play Again uses the puzzle quality (not the learning position) in Free Play', async () => {
+    it('Play Next uses the puzzle quality (not the learning position) in Free Play', async () => {
       const progress = useProgressStore()
       progress.state.learning = { stage: 3, subStage: 1 } // unrelated learning position
       const game = completeGame(DEFAULT_OPTIONS, true)
@@ -220,7 +220,7 @@ describe('CompletedView', () => {
       expect(game.session.puzzle.quality).toBe('major')
     })
 
-    it('Play Again preserves options', async () => {
+    it('Play Next preserves options', async () => {
       const game = completeGame({ noDegreeLabels: true, noPianoKeyboard: false })
       const wrapper = mountView()
       await wrapper.find('button:first-child').trigger('click')
