@@ -1,4 +1,5 @@
 # Game Design Document
+
 ## Proyecto: Harmony Puzzle (nombre provisional)
 
 > Basado en el ejercicio de armonía de Jorge Triana, músico cubano.
@@ -53,10 +54,12 @@ Grado  Col 1  Col 2  Col 3
 ## 3. Contenido musical
 
 ### Triadas
+
 - Mayor, menor, aumentada, disminuida
 - Suspendidas: sus2, sus4
 
 ### Tétradas (acordes de 4 notas)
+
 - Mayor con 6ª (maj6)
 - Mayor con 7ª mayor (maj7)
 - Dominante (7)
@@ -67,10 +70,12 @@ Grado  Col 1  Col 2  Col 3
 - Disminuido con 7ª (dim7)
 
 ### Acordes extendidos y alterados
+
 - Dominante con tensiones: 9, #9, b9, 11, #11, 13, b13
 - Dominante alterado: 1, 3, b5, #5, b7, b9, #9
 
 ### Escalas y modos
+
 - **Modos de la escala mayor**: Jónico, Dórico, Frigio, Lidio, Mixolidio, Eólico, Locrio
 - **Modos de la menor armónica**: los 7 modos
 - **Modos de la menor melódica**: los 7 modos (incluye Lidio dominante, Superlocrio, etc.)
@@ -122,31 +127,33 @@ Existen dos métodos de entrada, con diferentes implicaciones de dificultad:
 El contenido se presenta de forma progresiva. El jugador no puede saltarse etapas.
 
 #### Etapa 1 — Triadas básicas
+
 1. Solo acordes mayores (notas sin alteraciones complejas)
 2. Solo acordes menores
 3. Mezcla aleatoria de mayor y menor (sin dobles alteraciones)
-4. Acordes aumentados
-5. Acordes disminuidos
-6. Acordes suspendidos (sus2, sus4)
+4. Acordes suspendidos (sus2, sus4)
+5. Acordes aumentados
+6. Acordes disminuidos
 7. Mezcla aleatoria de todas las triadas
 
 > Al completar la Etapa 1: se desbloquea el **Modo Libre — Triadas** y se habilita la **Etapa 2**.
 
 #### Etapa 2 — Tétradas
-1. Maj7 → Dom7 → m7 → mMaj7 → m7b5 → dim7
-2. Acordes con 6ª
-3. Dominante suspendido
-4. Mezcla aleatoria de tétradas
+
+1. Maj7 → 6ª → Dom7 → 7sus4 → m7 → mMaj7 → m7b5 → dim7
+2. Mezcla aleatoria de tétradas
 
 > Al completar la Etapa 2: se desbloquea el **Modo Libre — Tétradas** y se habilita la **Etapa 3**.
 
 #### Etapas siguientes
+
 - El patrón se repite para acordes extendidos, escalas pentatónicas, modos y escalas simétricas.
 - Cada etapa completada añade ese contenido al **Modo Libre**.
 
 ### Modo Libre
 
 El jugador selecciona:
+
 - **Tipo de contenido**: los que ha desbloqueado (triadas, modos, etc.)
 - **Nota de la diagonal**: fija o aleatoria
 - **Ayudas**: activa/desactiva grados y teclado
@@ -200,7 +207,7 @@ El público objetivo es acotado (estudiantes y profesores de jazz y teoría musi
 El juego es completamente gratuito. Se incluye un botón o pantalla de donación voluntaria.
 
 | | |
-|---|---|
+| --- | --- |
 | **A favor** | Cero fricción. Máxima accesibilidad. Coherente con la motivación altruística del proyecto. |
 | **En contra** | La tasa de donación espontánea en proyectos de nicho es muy baja (típicamente <1% de usuarios). Difícilmente cubre costos de hosting si el proyecto escala. |
 
@@ -211,7 +218,7 @@ El juego es completamente gratuito. Se incluye un botón o pantalla de donación
 Versión gratuita con contenido limitado (por ejemplo, solo triadas). Versión Pro con contenido completo a un precio único.
 
 | | |
-|---|---|
+| --- | --- |
 | **A favor** | Propuesta de valor clara. El usuario sabe exactamente qué paga y qué obtiene. Modelo de ingresos predecible. |
 | **En contra** | El precio lo es todo: muy alto aleja a estudiantes, muy bajo no es sostenible. Requiere pasarela de pago desde el día uno. |
 
@@ -222,7 +229,7 @@ Versión gratuita con contenido limitado (por ejemplo, solo triadas). Versión P
 Versión gratuita con contenido limitado. Para acceder al contenido completo, el usuario realiza una donación con un monto mínimo sugerido, pero puede elegir donar más.
 
 | | |
-|---|---|
+| --- | --- |
 | **A favor** | Elimina la barrera del precio rígido. Genera buena voluntad. Funciona bien cuando hay comunidad o sentido de pertenencia. |
 | **En contra** | El pago promedio en modelos "paga lo que quieras" tiende a ser menor que un precio fijo. Más complejo de comunicar y de implementar. |
 
@@ -233,7 +240,7 @@ Versión gratuita con contenido limitado. Para acceder al contenido completo, el
 El juego es gratuito para todos. Los profesores o escuelas que quieran usarlo como herramienta didáctica (con gestión de grupos, seguimiento de progreso de alumnos, asignación de ejercicios) pagan una licencia anual.
 
 | | |
-|---|---|
+| --- | --- |
 | **A favor** | Alinea el modelo de negocio con el impacto real del proyecto. Un profesor que asigna el juego a 30 alumnos genera mucho más valor que un estudiante individual. Respeta la motivación altruística sin renunciar a la sostenibilidad. |
 | **En contra** | Requiere desarrollar funcionalidades de aula (gestión de grupos, panel docente), lo que aumenta el alcance del proyecto significativamente. |
 
