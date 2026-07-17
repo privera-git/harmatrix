@@ -81,7 +81,7 @@ describe('IdleView', () => {
 
     it('keeps minor tetrad symbols lowercase in the quality label (m7b5)', () => {
       const progress = useProgressStore()
-      progress.state.learning = { stage: 3, subStage: 5 }
+      progress.state.learning = { stage: 3, subStage: 7 }
       const wrapper = mountView()
       expect(wrapper.text()).toContain('Quality: ø7')
     })
