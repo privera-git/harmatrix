@@ -140,7 +140,7 @@ function backToMenu() {
       />
 
       <div class="action-row">
-        <button class="action-btn" @click="playAgain">Play Again</button>
+        <button class="action-btn" @click="playAgain">Play Next</button>
         <button class="action-btn action-btn--secondary" @click="backToMenu">Back to Menu</button>
       </div>
     </main>
